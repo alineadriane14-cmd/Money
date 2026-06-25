@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle Financeiro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f5f0;
+      --surface: #ffffff;
+      --surface2: #f0eeea;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --text: #1a1a18;
+      --text2: #5a5a56;
+      --text3: #8a8a84;
+      --green: #1D9E75;
+      --green-bg: #E1F5EE;
+      --green-dark: #085041;
+      --red: #E24B4A;
+      --red-bg: #FCEBEB;
+      --blue: #185FA5;
+      --blue-bg: #E6F1FB;
+      --amber: #BA7517;
+      --amber-bg: #FAEEDA;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --surface: #242422;
+        --surface2: #2e2e2c;
+        --border: rgba(255,255,255,0.10);
+        --border2: rgba(255,255,255,0.20);
+        --text: #f0f0ea;
+        --text2: #aaa89e;
+        --text3: #6a6a64;
+        --green-bg: #0a2e20;
+        --red-bg: #2e1010;
+        --blue-bg: #0a1e30;
+        --amber-bg: #2a1a04;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-title { font-size: 16px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .topbar-title i { color: var(--green); }
+    .topbar-sub { font-size: 11px; color: var(--text3); }
+
+    .month-nav { display: flex; align-items: center; gap: 8px; }
+    .month-nav button {
+      background: none; border: 0.5px solid var(--border2);
+      border-radius: var(--radius); padding: 6px 10px; cursor: pointer;
+      color: var(--text); font-size: 13px;
+    }
+    .month-nav button:hover { background: var(--surface2); }
+    .month-label { font-size: 13px; font-weight: 500; min-width: 110px; text-align: center; color: var(--text); }
+
+    .container { max-width: 700px; margin: 0 auto; padding: 16px 16px 80px; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    @media (max-width: 480px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+    .metric { background: var(--surface2); border-radius: var(--radius); padding: 10px 12px; }
+    .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+    .metric-value { font-size: 18px; font-weight: 600; }
+    .metric-value.green { color: var(--green); }
+    .metric-value.red { color: var(--red); }
+    .metric-value.blue { color: var(--blue); }
+    .metric-value.amber { color: var(--amber); }
+
+    .budget-bar { margin-bottom: 16px; }
+    .budget-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+    .bar-track { height: 7px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 100px; transition: width .4s; }
+    .bar-fill.ok { background: var(--green); }
+    .bar-fill.warn { background: var(--amber); }
+    .bar-fill.over { background: var(--red); }
+
+    .tabs {
+      display: flex; gap: 2px; background: var(--surface2);
+      border-radius: var(--radius); padding: 3px; margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .tab {
+      flex: 1; min-width: 60px; padding: 7px 8px; border: none; background: none;
+      cursor: pointer; border-radius: 6px; font-size: 12px; color: var(--text2);
+      transition: all .15s; white-space: nowrap;
+    }
+    .tab.active {
+      background: var(--surface); color: var(--text); font-weight: 500;
+      border: 0.5px solid var(--border);
+    }
+    .tab:hover:not(.active) { background: var(--surface); opacity: .7; }
+
+    .section {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px; font-weight: 500; color: var(--text);
+      margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+    }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    @media (max-width: 480px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 12px; color: var(--text2); }
+    .form-group input, .form-group select {
+      padding: 9px 11px; border: 0.5px solid var(--border2);
+      border-radius: var(--radius); background: var(--surface);
+      color: var(--text); font-size: 13px; font-family: inherit;
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--green); }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 16px; border: 0.5px solid var(--border2);
+      border-radius: var(--radius); cursor: pointer; font-size: 13px;
+      color: var(--text); background: none; font-family: inherit; transition: all .15s;
+    }
+    .btn:hover { background: var(--surface2); }
+    .btn.primary { background: var(--green); color: #fff; border-color: var(--green); width: 100%; }
+    .btn.primary:hover { background: var(--green-dark); border-color: var(--green-dark); }
+    .btn.sm { padding: 5px 10px; font-size: 12px; }
+    .btn.danger { color: var(--red); border-color: var(--red); }
+    .btn.danger:hover { background: var(--red-bg); }
+
+    .list-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 0.5px solid var(--border);
+    }
+    .list-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .item-icon {
+      width: 36px; height: 36px; border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .item-info { flex: 1; min-width: 0; }
+    .item-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+    .item-amount { font-size: 14px; font-weight: 600; text-align: right; flex-shrink: 0; }
+    .item-amount.positive { color: var(--green); }
+    .item-amount.negative { color: var(--red); }
+    .item-amount.credit { color: var(--blue); }
+    .item-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+    .list-item:hover .item-actions { opacity: 1; }
+    @media (max-width: 600px) { .item-actions { opacity: 1; } }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 5px 7px; border-radius: 6px; color: var(--text3); font-size: 14px;
+    }
+    .icon-btn.edit:hover { color: var(--blue); background: var(--blue-bg); }
+    .icon-btn.del:hover { color: var(--red); background: var(--red-bg); }
+
+    .badge {
+      display: inline-block; font-size: 10px; padding: 2px 6px;
+      border-radius: 100px; margin-left: 4px; font-weight: 500;
+    }
+    .badge.cartao { background: var(--blue-bg); color: var(--blue); }
+    .badge.pix { background: var(--green-bg); color: var(--green-dark); }
+    .badge.dinheiro { background: var(--surface2); color: var(--text2); }
+    .badge.parcela { background: var(--amber-bg); color: var(--amber); }
+    .badge.pago { background: var(--green-bg); color: var(--green-dark); }
+    .badge.pendente { background: var(--red-bg); color: var(--red); }
+
+    .empty-state { text-align: center; padding: 2rem; color: var(--text2); font-size: 13px; }
+    .empty-state i { font-size: 30px; display: block; margin-bottom: 8px; opacity: .35; }
+
+    .dica {
+      background: var(--surface2); border-left: 3px solid var(--green);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 10px 14px; font-size: 12px; color: var(--text2);
+      margin-top: 12px; line-height: 1.6;
+    }
+    .dica strong { color: var(--text); }
+
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; padding: 3px 8px; border-radius: 100px; font-weight: 500;
+    }
+    .status-pill.superavit { background: var(--green-bg); color: var(--green-dark); }
+    .status-pill.deficito { background: var(--red-bg); color: var(--red); }
+    .status-pill.neutro { background: var(--surface2); color: var(--text2); }
+
+    .cat-scroll { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .cat-btn {
+      padding: 6px 11px; border: 0.5px solid var(--border);
+      border-radius: 100px; background: none; cursor: pointer;
+      font-size: 12px; color: var(--text2); transition: all .15s; white-space: nowrap;
+    }
+    .cat-btn:hover, .cat-btn.sel { border-color: var(--green); color: var(--green); background: var(--green-bg); }
+
+    .chart-wrap { position: relative; width: 100%; height: 200px; margin-top: 8px; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,.5); display: none; align-items: center;
+      justify-content: center; z-index: 200; padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 0.5px solid var(--border); padding: 20px;
+      width: min(480px, 100%); max-height: 85vh; overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 15px; font-weight: 600; margin-bottom: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-footer { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-footer .btn { flex: 1; }
+
+    .parc-parcelas-grid { display: grid; gap: 6px; margin-top: 8px; }
+    .parc-row {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border-radius: var(--radius); background: var(--surface2); font-size: 13px;
+    }
+    .parc-row.pago-row { opacity: .55; }
+    .check-parc { accent-color: var(--green); width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px;
+      background: var(--surface2); border-radius: 100px; font-size: 12px; color: var(--text);
+    }
+    .chip-del {
+      background: none; border: none; cursor: pointer; color: var(--text3);
+      padding: 0 2px; font-size: 15px; line-height: 1;
+    }
+    .chip-del:hover { color: var(--red); }
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+
+    .separator { height: 0.5px; background: var(--border); margin: 14px 0; }
+
+    .mini-bar { height: 4px; background: var(--surface2); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; background: var(--amber); border-radius: 4px; }
+
+    /* BOTTOM NAV (mobile) */
+    .bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-top: 0.5px solid var(--border);
+      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+      z-index: 50;
+    }
+    @media (max-width: 600px) { .bottom-nav { display: flex; } .tabs { display: none; } }
+    .bnav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; background: none; border: none; cursor: pointer;
+      font-size: 10px; color: var(--text3); padding: 4px 0;
+    }
+    .bnav-item i { font-size: 20px; }
+    .bnav-item.active { color: var(--green); }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title"><i class="fa-solid fa-wallet"></i> Controle Financeiro</div>
+    <div class="topbar-sub">Caderno de Educação Financeira — Banco Central do Brasil</div>
+  </div>
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)" aria-label="Mês anterior"><i class="fa-solid fa-chevron-left"></i></button>
+    <span class="month-label" id="month-label"></span>
+    <button onclick="changeMonth(1)" aria-label="Próximo mês"><i class="fa-solid fa-chevron-right"></i></button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="summary-grid">
+    <div class="metric"><div class="metric-label">↓ Receitas</div><div class="metric-value green" id="total-receitas">R$ 0</div></div>
+    <div class="metric"><div class="metric-label">↑ Despesas</div><div class="metric-value red" id="total-despesas">R$ 0</div></div>
+    <div class="metric"><div class="metric-label">💳 Cartão</div><div class="metric-value blue" id="total-cartao">R$ 0</div></div>
+    <div class="metric"><div class="metric-label">🐷 Saldo</div><div class="metric-value" id="total-saldo">R$ 0</div></div>
+  </div>
+
+  <div class="budget-bar">
+    <div class="budget-bar-label"><span>Comprometimento do orçamento</span><span id="pct-label">0%</span></div>
+    <div class="bar-track"><div class="bar-fill ok" id="budget-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('lancamentos',this)"><i class="fa-solid fa-list"></i> Lançamentos</button>
+    <button class="tab" onclick="setTab('cartao',this)"><i class="fa-solid fa-credit-card"></i> Cartão</button>
+    <button class="tab" onclick="setTab('parcelamentos',this)"><i class="fa-solid fa-calendar-days"></i> Parcelamentos</button>
+    <button class="tab" onclick="setTab('analise',this)"><i class="fa-solid fa-chart-pie"></i> Análise</button>
+    <button class="tab" onclick="setTab('config',this)"><i class="fa-solid fa-gear"></i> Config.</button>
+  </div>
+
+  <!-- LANÇAMENTOS -->
+  <div id="tab-lancamentos">
+    <div class="section">
+      <div class="section-title">Novo lançamento</div>
+      <div class="form-row-3">
+        <div class="form-group"><label>Descrição</label><input type="text" id="desc" placeholder="Ex: Salário, Aluguel..." /></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" id="valor" placeholder="0,00" step="0.01" min="0" /></div>
+        <div class="form-group"><label>Data</label><input type="date" id="data-input" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tipo</label>
+          <select id="tipo" onchange="togglePagamento()">
+            <option value="receita">📈 Receita</option>
+            <option value="despesa">📉 Despesa</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Forma de pagamento</label>
+          <select id="pagamento">
+            <option value="dinheiro">💵 Dinheiro/Débito</option>
+            <option value="pix">⚡ Pix</option>
+            <option value="cartao">💳 Cartão de crédito</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px"><label>Categoria</label>
+        <div class="cat-scroll" id="cat-grid-lanc"></div>
+      </div>
+      <button class="btn primary" onclick="addLancamento()"><i class="fa-solid fa-plus"></i> Adicionar lançamento</button>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        Histórico do mês
+        <span class="status-pill" id="status-pill">—</span>
+      </div>
+      <div id="lista-lancamentos"><div class="empty-state"><i class="fa-solid fa-receipt"></i>Nenhum lançamento ainda.</div></div>
+    </div>
+  </div>
+
+  <!-- CARTÃO -->
+  <div id="tab-cartao" style="display:none">
+    <div class="section">
+      <div class="section-title">Registrar gasto no cartão</div>
+      <div class="form-row">
+        <div class="form-group"><label>Estabelecimento / descrição</label><input type="text" id="cartao-desc" placeholder="Ex: iFood, Amazon..." /></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" id="cartao-valor" placeholder="0,00" step="0.01" min="0" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Cartão</label><select id="cartao-nome"></select></div>
+        <div class="form-group"><label>Parcelas</label>
+          <select id="cartao-parcelas">
+            <option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option>
+            <option value="6">6x</option><option value="12">12x</option><option value="18">18x</option><option value="24">24x</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn primary" onclick="addCartao()"><i class="fa-solid fa-plus"></i> Registrar no cartão</button>
+    </div>
+    <div class="section">
+      <div class="section-title">Gastos no cartão — mês atual <span id="cartao-total-label" style="font-weight:400;font-size:12px;color:var(--text2)"></span></div>
+      <div id="lista-cartao"><div class="empty-state"><i class="fa-solid fa-credit-card"></i>Nenhum gasto no cartão.</div></div>
+    </div>
+    <div class="dica"><strong>💡 Dica:</strong> Confira regularmente extratos e faturas. Cartão de crédito cobra juros se você não pagar o total da fatura.</div>
+  </div>
+
+  <!-- PARCELAMENTOS -->
+  <div id="tab-parcelamentos" style="display:none">
+    <div class="section">
+      <div class="section-title">Novo parcelamento</div>
+      <div class="form-row">
+        <div class="form-group"><label>Descrição</label><input type="text" id="parc-desc" placeholder="Ex: TV 4K, Geladeira..." /></div>
+        <div class="form-group"><label>Valor total (R$)</label><input type="number" id="parc-total" placeholder="0,00" step="0.01" min="0" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Número de parcelas</label><input type="number" id="parc-qtd" placeholder="Ex: 12" min="2" max="60" value="12" /></div>
+        <div class="form-group"><label>Mês inicial</label><input type="month" id="parc-inicio" /></div>
+      </div>
+      <button class="btn primary" onclick="addParcelamento()"><i class="fa-solid fa-plus"></i> Adicionar parcelamento</button>
+    </div>
+    <div class="section">
+      <div class="section-title">Compromissos assumidos</div>
+      <div id="lista-parcelamentos"><div class="empty-state"><i class="fa-solid fa-calendar-days"></i>Nenhum parcelamento cadastrado.</div></div>
+    </div>
+    <div class="dica"><strong>💡 Dica:</strong> Marque as parcelas pagas para controle preciso. Lembre-se: parcelamento aumenta o custo total da compra com juros.</div>
+  </div>
+
+  <!-- ANÁLISE -->
+  <div id="tab-analise" style="display:none">
+    <div class="section">
+      <div class="section-title">Balanço — Receitas × Despesas</div>
+      <div class="chart-wrap"><canvas id="chart-balanco" role="img" aria-label="Gráfico de barras com receitas, despesas e poupança"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Despesas por categoria</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="chart-categorias" role="img" aria-label="Gráfico de rosca com despesas por categoria"></canvas></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Situação do mês</div>
+      <div id="analise-resumo" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+    </div>
+    <div class="dica"><strong>💡 Meta básica (Caderno BCB):</strong> Receitas − Despesas = Poupança. Busque sempre o orçamento <strong>superavitário</strong>: despesas menores que receitas.</div>
+  </div>
+
+  <!-- CONFIG -->
+  <div id="tab-config" style="display:none">
+    <div class="section">
+      <div class="section-title">
+        Categorias
+        <button class="btn sm" onclick="openModal('modal-cat')"><i class="fa-solid fa-plus"></i> Nova</button>
+      </div>
+      <div class="chips-wrap" id="chips-categorias"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">
+        Cartões
+        <button class="btn sm" onclick="openModal('modal-cartao-new')"><i class="fa-solid fa-plus"></i> Novo</button>
+      </div>
+      <div class="chips-wrap" id="chips-cartoes"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">Sincronizar entre dispositivos</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Os dados ficam salvos no seu navegador. Para usar em outro celular ou PC, exporte o JSON e importe no outro dispositivo.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn" style="flex:1" onclick="exportData()"><i class="fa-solid fa-download"></i> Exportar JSON</button>
+        <button class="btn" style="flex:1" onclick="document.getElementById('import-file').click()"><i class="fa-solid fa-upload"></i> Importar JSON</button>
+      </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)" />
+      <div class="separator"></div>
+      <button class="btn danger" style="width:100%" onclick="if(confirm('Apagar TODOS os dados? Esta ação não pode ser desfeita.'))clearAll()">
+        <i class="fa-solid fa-trash"></i> Apagar todos os dados
+      </button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" role="navigation" aria-label="Navegação principal">
+  <button class="bnav-item active" onclick="setTab('lancamentos',this)" data-tab="lancamentos"><i class="fa-solid fa-list"></i>Lançamentos</button>
+  <button class="bnav-item" onclick="setTab('cartao',this)" data-tab="cartao"><i class="fa-solid fa-credit-card"></i>Cartão</button>
+  <button class="bnav-item" onclick="setTab('parcelamentos',this)" data-tab="parcelamentos"><i class="fa-solid fa-calendar-days"></i>Parcelas</button>
+  <button class="bnav-item" onclick="setTab('analise',this)" data-tab="analise"><i class="fa-solid fa-chart-pie"></i>Análise</button>
+  <button class="bnav-item" onclick="setTab('config',this)" data-tab="config"><i class="fa-solid fa-gear"></i>Config.</button>
+</nav>
+
+<!-- MODAL EDITAR LANÇAMENTO -->
+<div class="modal-overlay" id="modal-edit" onclick="if(event.target===this)closeModal('modal-edit')">
+  <div class="modal" role="dialog" aria-labelledby="modal-edit-title">
+    <div class="modal-title"><span id="modal-edit-title">Editar lançamento</span>
+      <button class="icon-btn del" onclick="closeModal('modal-edit')" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <input type="hidden" id="edit-id" />
+    <div class="form-row-3">
+      <div class="form-group"><label>Descrição</label><input type="text" id="edit-desc" /></div>
+      <div class="form-group"><label>Valor (R$)</label><input type="number" id="edit-valor" step="0.01" min="0" /></div>
+      <div class="form-group"><label>Data</label><input type="date" id="edit-data" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo</label>
+        <select id="edit-tipo"><option value="receita">📈 Receita</option><option value="despesa">📉 Despesa</option></select>
+      </div>
+      <div class="form-group"><label>Pagamento</label>
+        <select id="edit-pagamento">
+          <option value="dinheiro">💵 Dinheiro/Débito</option>
+          <option value="pix">⚡ Pix</option>
+          <option value="cartao">💳 Cartão</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px"><label>Categoria</label>
+      <div class="cat-scroll" id="cat-grid-edit"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="btn primary" onclick="saveEdit()"><i class="fa-solid fa-check"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARCELAS -->
+<div class="modal-overlay" id="modal-parcelas" onclick="if(event.target===this)closeModal('modal-parcelas')">
+  <div class="modal" role="dialog" aria-labelledby="modal-parc-title">
+    <div class="modal-title">
+      <span id="modal-parc-title">Parcelas</span>
+      <button class="icon-btn del" onclick="closeModal('modal-parcelas')" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Marque as parcelas já pagas:</p>
+    <div class="parc-parcelas-grid" id="modal-parc-lista"></div>
+    <div class="modal-footer">
+      <button class="btn primary" onclick="closeModal('modal-parcelas')"><i class="fa-solid fa-check"></i> Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA CATEGORIA -->
+<div class="modal-overlay" id="modal-cat" onclick="if(event.target===this)closeModal('modal-cat')">
+  <div class="modal" role="dialog" aria-labelledby="modal-cat-title">
+    <div class="modal-title"><span id="modal-cat-title">Nova categoria</span>
+      <button class="icon-btn del" onclick="closeModal('modal-cat')" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Emoji</label><input type="text" id="cat-emoji" placeholder="🏷" maxlength="2" style="font-size:20px;text-align:center" /></div>
+      <div class="form-group"><label>Nome</label><input type="text" id="cat-nome" placeholder="Ex: Assinaturas, Pet..." /></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-cat')">Cancelar</button>
+      <button class="btn primary" onclick="addCategoria()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO CARTÃO -->
+<div class="modal-overlay" id="modal-cartao-new" onclick="if(event.target===this)closeModal('modal-cartao-new')">
+  <div class="modal" role="dialog" aria-labelledby="modal-cartao-title">
+    <div class="modal-title"><span id="modal-cartao-title">Novo cartão</span>
+      <button class="icon-btn del" onclick="closeModal('modal-cartao-new')" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label>Nome do cartão</label>
+      <input type="text" id="new-cartao-nome" placeholder="Ex: Nubank, C6 Bank, XP..." />
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-cartao-new')">Cancelar</button>
+      <button class="btn primary" onclick="addCartaoConfig()"><i class="fa-solid fa-plus"></i> Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+let curMonth = new Date().getMonth(), curYear = new Date().getFullYear();
+let activeTab = 'lancamentos', editCatSel = '', addCatSel = '';
+let chartB = null, chartC = null;
+
+const DEFAULT_CATS = [
+  {emoji:'🏠',nome:'Moradia'},{emoji:'🍽',nome:'Alimentação'},{emoji:'🚗',nome:'Transporte'},
+  {emoji:'❤️',nome:'Saúde'},{emoji:'📚',nome:'Educação'},{emoji:'🎉',nome:'Lazer'},
+  {emoji:'💼',nome:'Salário'},{emoji:'📈',nome:'Investimento'},{emoji:'💊',nome:'Farmácia'},
+  {emoji:'📱',nome:'Assinaturas'},{emoji:'🐾',nome:'Pet'},{emoji:'👗',nome:'Vestuário'},
+  {emoji:'🎁',nome:'Presentes'},{emoji:'📌',nome:'Outros'}
+];
+const DEFAULT_CARTOES = ['Nubank','Itaú','Bradesco','Santander','Inter','C6 Bank','XP'];
+
+let D = JSON.parse(localStorage.getItem('cf_v2') || 'null') || {
+  lancamentos:[], cartao:[], parcelamentos:[],
+  categorias:[...DEFAULT_CATS], cartoes:[...DEFAULT_CARTOES]
+};
+
+function save() { try { localStorage.setItem('cf_v2', JSON.stringify(D)); } catch(e){} }
+function fmt(v) { return 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtN(v) { return Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function changeMonth(d) {
+  curMonth += d;
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  if (curMonth < 0)  { curMonth = 11; curYear--; }
+  render();
+}
+
+function setTab(t, el) {
+  activeTab = t;
+  // desktop tabs
+  document.querySelectorAll('.tabs .tab').forEach(b => b.classList.remove('active'));
+  // bottom nav
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  // activate clicked
+  if (el) el.classList.add('active');
+  // also activate matching counterpart
+  document.querySelectorAll('[data-tab="'+t+'"]').forEach(b => b.classList.add('active'));
+
+  ['lancamentos','cartao','parcelamentos','analise','config'].forEach(id => {
+    document.getElementById('tab-'+id).style.display = id === t ? 'block' : 'none';
+  });
+  if (t === 'analise') renderCharts();
+  if (t === 'config') renderConfig();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function togglePagamento() {
+  document.getElementById('pagamento').disabled = document.getElementById('tipo').value === 'receita';
+}
+
+function getMonthItems() {
+  const L = D.lancamentos.filter(l => {
+    const d = new Date(l.data + 'T12:00:00');
+    return d.getFullYear() === curYear && d.getMonth() === curMonth;
+  });
+  const C = D.cartao.filter(c => {
+    const d = new Date(c.data + 'T12:00:00');
+    return d.getFullYear() === curYear && d.getMonth() === curMonth;
+  });
+  const P = D.parcelamentos.filter(p => {
+    const ini = new Date(p.inicio + '-01T12:00:00');
+    const fim = new Date(ini.getFullYear(), ini.getMonth() + p.qtd - 1, 28);
+    const cur = new Date(curYear, curMonth, 1);
+    return cur >= ini && cur <= fim;
+  });
+  return { L, C, P };
+}
+
+function getParcIdx(p) {
+  const ini = new Date(p.inicio + '-01T12:00:00');
+  return (curYear - ini.getFullYear()) * 12 + (curMonth - ini.getMonth());
+}
+function isParcPago(p) {
+  const idx = getParcIdx(p);
+  return p.pagas && p.pagas.includes(idx);
+}
+
+function catEmoji(nome) {
+  const c = D.categorias.find(c => c.nome === nome);
+  return c ? c.emoji : '📌';
+}
+
+function renderCatButtons(containerId, selected, onSelectFn) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = D.categorias.map(c =>
+    `<button class="cat-btn${c.nome === selected ? ' sel' : ''}" onclick="${onSelectFn}(this,'${c.nome.replace(/'/g,"\\'")}')">${c.emoji} ${c.nome}</button>`
+  ).join('');
+}
+
+function selCatAdd(el, cat) {
+  addCatSel = cat;
+  document.querySelectorAll('#cat-grid-lanc .cat-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function selCatEdit(el, cat) {
+  editCatSel = cat;
+  document.querySelectorAll('#cat-grid-edit .cat-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function updateSummary() {
+  const { L, C, P } = getMonthItems();
+  const receitas    = L.filter(l => l.tipo === 'receita').reduce((s,l) => s+l.valor, 0);
+  const despesas    = L.filter(l => l.tipo === 'despesa').reduce((s,l) => s+l.valor, 0);
+  const cartaoMes   = C.reduce((s,c) => s+c.valor, 0);
+  const parcelasMes = P.filter(p => !isParcPago(p)).reduce((s,p) => s+(p.total/p.qtd), 0);
+  const totalSaida  = despesas + cartaoMes + parcelasMes;
+  const saldo       = receitas - totalSaida;
+
+  document.getElementById('total-receitas').textContent = fmt(receitas);
+  document.getElementById('total-despesas').textContent = fmt(totalSaida);
+  document.getElementById('total-cartao').textContent   = fmt(cartaoMes);
+  const sEl = document.getElementById('total-saldo');
+  sEl.textContent  = (saldo >= 0 ? '' : '-') + fmt(saldo);
+  sEl.className    = 'metric-value ' + (saldo > 0 ? 'green' : saldo < 0 ? 'red' : 'amber');
+
+  const pct = receitas > 0 ? Math.min((totalSaida / receitas) * 100, 100) : 0;
+  const bar = document.getElementById('budget-bar');
+  bar.style.width  = pct.toFixed(1) + '%';
+  bar.className    = 'bar-fill ' + (pct < 70 ? 'ok' : pct < 90 ? 'warn' : 'over');
+  document.getElementById('pct-label').textContent = pct.toFixed(0) + '%';
+
+  const pill = document.getElementById('status-pill');
+  if (saldo > 0) { pill.className = 'status-pill superavit'; pill.textContent = '✓ Superavitário'; }
+  else if (saldo < 0) { pill.className = 'status-pill deficito'; pill.textContent = '⚠ Deficitário'; }
+  else { pill.className = 'status-pill neutro'; pill.textContent = '= Neutro'; }
+}
+
+function renderLancamentos() {
+  renderCatButtons('cat-grid-lanc', addCatSel, 'selCatAdd');
+  const { L } = getMonthItems();
+  const el = document.getElementById('lista-lancamentos');
+  if (!L.length) { el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-receipt"></i>Nenhum lançamento neste mês.</div>'; return; }
+  el.innerHTML = [...L].sort((a,b) => new Date(b.data)-new Date(a.data)).map(l => {
+    const isRec = l.tipo === 'receita';
+    const bg    = isRec ? 'background:var(--green-bg)' : 'background:var(--red-bg)';
+    const badge = l.pagamento === 'pix' ? '<span class="badge pix">Pix</span>'
+                : l.pagamento === 'cartao' ? '<span class="badge cartao">Cartão</span>'
+                : '<span class="badge dinheiro">Débito</span>';
+    const dt = new Date(l.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    return `<div class="list-item">
+      <div class="item-icon" style="${bg}">${catEmoji(l.categoria)}</div>
+      <div class="item-info">
+        <div class="item-name">${l.desc}${badge}</div>
+        <div class="item-meta">${l.categoria} · ${dt}</div>
+      </div>
+      <div class="item-amount ${isRec?'positive':'negative'}">${isRec?'+':'-'}${fmt(l.valor)}</div>
+      <div class="item-actions">
+        <button class="icon-btn edit" onclick="openEdit(${l.id})" aria-label="Editar"><i class="fa-solid fa-pen"></i></button>
+        <button class="icon-btn del" onclick="delItem('lancamentos',${l.id})" aria-label="Remover"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEdit(id) {
+  const l = D.lancamentos.find(x => x.id === id);
+  if (!l) return;
+  editCatSel = l.categoria;
+  document.getElementById('edit-id').value    = id;
+  document.getElementById('edit-desc').value  = l.desc;
+  document.getElementById('edit-valor').value = l.valor;
+  document.getElementById('edit-data').value  = l.data;
+  document.getElementById('edit-tipo').value  = l.tipo;
+  document.getElementById('edit-pagamento').value = l.pagamento || 'dinheiro';
+  renderCatButtons('cat-grid-edit', editCatSel, 'selCatEdit');
+  openModal('modal-edit');
+}
+
+function saveEdit() {
+  const id  = parseInt(document.getElementById('edit-id').value);
+  const idx = D.lancamentos.findIndex(x => x.id === id);
+  if (idx === -1) return;
+  const desc  = document.getElementById('edit-desc').value.trim();
+  const valor = parseFloat(document.getElementById('edit-valor').value);
+  const data  = document.getElementById('edit-data').value;
+  if (!desc || isNaN(valor) || valor <= 0 || !data) { alert('Preencha todos os campos.'); return; }
+  D.lancamentos[idx] = { ...D.lancamentos[idx], desc, valor, data,
+    tipo: document.getElementById('edit-tipo').value,
+    pagamento: document.getElementById('edit-pagamento').value,
+    categoria: editCatSel
+  };
+  save(); closeModal('modal-edit'); render();
+}
+
+function addLancamento() {
+  const desc  = document.getElementById('desc').value.trim();
+  const valor = parseFloat(document.getElementById('valor').value);
+  const tipo  = document.getElementById('tipo').value;
+  const pag   = document.getElementById('pagamento').value;
+  const dt    = document.getElementById('data-input').value;
+  if (!desc || isNaN(valor) || valor <= 0 || !dt) { alert('Preencha descrição, valor e data.'); return; }
+  D.lancamentos.push({ id: Date.now(), desc, valor, tipo, pagamento: pag, categoria: addCatSel, data: dt });
+  save();
+  document.getElementById('desc').value  = '';
+  document.getElementById('valor').value = '';
+  render();
+}
+
+function renderCartao() {
+  const sel = document.getElementById('cartao-nome');
+  const cur = sel.value;
+  sel.innerHTML = D.cartoes.map(c => `<option${c===cur?' selected':''}>${c}</option>`).join('');
+  const { C } = getMonthItems();
+  const list  = document.getElementById('lista-cartao');
+  const total = C.reduce((s,c) => s+c.valor, 0);
+  document.getElementById('cartao-total-label').textContent = C.length ? `Total: ${fmt(total)}` : '';
+  if (!C.length) { list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-credit-card"></i>Nenhum gasto no cartão este mês.</div>'; return; }
+  list.innerHTML = C.map(c => {
+    const parcInfo = c.parcelas > 1
+      ? `<span class="badge parcela">${c.parcelas}x de R$ ${fmtN(c.valor/c.parcelas)}</span>`
+      : '<span class="badge dinheiro">À vista</span>';
+    return `<div class="list-item">
+      <div class="item-icon" style="background:var(--blue-bg)">💳</div>
+      <div class="item-info">
+        <div class="item-name">${c.desc}${parcInfo}</div>
+        <div class="item-meta">${c.cartao}</div>
+      </div>
+      <div class="item-amount credit">-${fmt(c.valor)}</div>
+      <div class="item-actions">
+        <button class="icon-btn del" onclick="delItem('cartao',${c.id})" aria-label="Remover"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addCartao() {
+  const desc    = document.getElementById('cartao-desc').value.trim();
+  const valor   = parseFloat(document.getElementById('cartao-valor').value);
+  const cartao  = document.getElementById('cartao-nome').value;
+  const parcelas = parseInt(document.getElementById('cartao-parcelas').value);
+  if (!desc || isNaN(valor) || valor <= 0) { alert('Preencha descrição e valor.'); return; }
+  D.cartao.push({ id: Date.now(), desc, valor, cartao, parcelas, data: new Date().toISOString().slice(0,10) });
+  save();
+  document.getElementById('cartao-desc').value  = '';
+  document.getElementById('cartao-valor').value = '';
+  renderCartao(); updateSummary();
+}
+
+function renderParcelamentos() {
+  const { P } = getMonthItems();
+  const el = document.getElementById('lista-parcelamentos');
+  if (!D.parcelamentos.length) { el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-calendar-days"></i>Nenhum parcelamento cadastrado.</div>'; return; }
+  el.innerHTML = D.parcelamentos.map(p => {
+    const ini      = new Date(p.inicio + '-01T12:00:00');
+    const parcAtual = Math.min((curYear-ini.getFullYear())*12+(curMonth-ini.getMonth())+1, p.qtd);
+    const ativo    = P.find(x => x.id === p.id);
+    const pago     = isParcPago(p);
+    const pct      = Math.round(((p.pagas||[]).length / p.qtd) * 100);
+    const badge    = pago ? '<span class="badge pago">✓ Paga</span>' : ativo ? '<span class="badge pendente">Pendente</span>' : '';
+    return `<div class="list-item">
+      <div class="item-icon" style="background:var(--amber-bg)">📅</div>
+      <div class="item-info">
+        <div class="item-name">${p.desc}${badge}</div>
+        <div class="item-meta">Parcela ${Math.max(1,parcAtual)}/${p.qtd} · R$ ${fmtN(p.total/p.qtd)}/mês · Total: ${fmt(p.total)}</div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+        <span style="font-size:11px;color:var(--text2)">${pct}% pago</span>
+        <button class="btn sm" onclick="openParcelas(${p.id})"><i class="fa-solid fa-list-check"></i> Parcelas</button>
+      </div>
+      <div class="item-actions">
+        <button class="icon-btn del" onclick="delItem('parcelamentos',${p.id})" aria-label="Remover"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openParcelas(id) {
+  const p = D.parcelamentos.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('modal-parc-title').textContent = p.desc + ' — ' + p.qtd + 'x de R$ ' + fmtN(p.total/p.qtd);
+  const ini = new Date(p.inicio + '-01T12:00:00');
+  let html  = '';
+  for (let i = 0; i < p.qtd; i++) {
+    const d    = new Date(ini.getFullYear(), ini.getMonth()+i, 1);
+    const label = MESES[d.getMonth()].slice(0,3) + ' ' + d.getFullYear();
+    const pago  = (p.pagas||[]).includes(i);
+    html += `<div class="parc-row${pago?' pago-row':''}" id="row-${id}-${i}">
+      <input type="checkbox" class="check-parc" ${pago?'checked':''} onchange="toggleParcPaga(${id},${i},this.checked)" id="pc-${id}-${i}" aria-label="Parcela ${i+1}" />
+      <label for="pc-${id}-${i}" style="flex:1;cursor:pointer;font-size:13px">Parcela ${i+1} — ${label}</label>
+      <span style="color:${pago?'var(--green)':'var(--text2)'}">R$ ${fmtN(p.total/p.qtd)}</span>
+    </div>`;
+  }
+  document.getElementById('modal-parc-lista').innerHTML = html;
+  openModal('modal-parcelas');
+}
+
+function toggleParcPaga(id, idx, checked) {
+  const p = D.parcelamentos.find(x => x.id === id);
+  if (!p) return;
+  if (!p.pagas) p.pagas = [];
+  if (checked) { if (!p.pagas.includes(idx)) p.pagas.push(idx); }
+  else { p.pagas = p.pagas.filter(i => i !== idx); }
+  save();
+  const row = document.getElementById('row-'+id+'-'+idx);
+  if (row) row.className = 'parc-row' + (checked ? ' pago-row' : '');
+  updateSummary(); renderParcelamentos();
+}
+
+function addParcelamento() {
+  const desc  = document.getElementById('parc-desc').value.trim();
+  const total = parseFloat(document.getElementById('parc-total').value);
+  const qtd   = parseInt(document.getElementById('parc-qtd').value);
+  const inicio = document.getElementById('parc-inicio').value;
+  if (!desc || isNaN(total) || total <= 0 || !qtd || !inicio) { alert('Preencha todos os campos.'); return; }
+  D.parcelamentos.push({ id: Date.now(), desc, total, qtd, inicio, pagas: [] });
+  save();
+  document.getElementById('parc-desc').value  = '';
+  document.getElementById('parc-total').value = '';
+  renderParcelamentos(); updateSummary();
+}
+
+function delItem(arr, id) {
+  if (!confirm('Remover este item?')) return;
+  D[arr] = D[arr].filter(x => x.id !== id);
+  save(); render();
+}
+
+function addCategoria() {
+  const emoji = document.getElementById('cat-emoji').value.trim() || '📌';
+  const nome  = document.getElementById('cat-nome').value.trim();
+  if (!nome) { alert('Informe o nome da categoria.'); return; }
+  if (D.categorias.find(c => c.nome.toLowerCase() === nome.toLowerCase())) { alert('Categoria já existe.'); return; }
+  D.categorias.push({ emoji, nome });
+  save(); closeModal('modal-cat');
+  document.getElementById('cat-emoji').value = '';
+  document.getElementById('cat-nome').value  = '';
+  renderConfig(); renderLancamentos();
+}
+
+function addCartaoConfig() {
+  const nome = document.getElementById('new-cartao-nome').value.trim();
+  if (!nome) { alert('Informe o nome do cartão.'); return; }
+  if (D.cartoes.includes(nome)) { alert('Cartão já cadastrado.'); return; }
+  D.cartoes.push(nome);
+  save(); closeModal('modal-cartao-new');
+  document.getElementById('new-cartao-nome').value = '';
+  renderConfig(); renderCartao();
+}
+
+function renderConfig() {
+  document.getElementById('chips-categorias').innerHTML = D.categorias.map(c =>
+    `<span class="chip">${c.emoji} ${c.nome}${
+      DEFAULT_CATS.find(d => d.nome===c.nome) ? ''
+      : `<button class="chip-del" onclick="delCategoria('${c.nome.replace(/'/g,"\\'")}')">×</button>`
+    }</span>`
+  ).join('');
+  document.getElementById('chips-cartoes').innerHTML = D.cartoes.map(c =>
+    `<span class="chip">💳 ${c}${
+      DEFAULT_CARTOES.includes(c) ? ''
+      : `<button class="chip-del" onclick="delCartao('${c.replace(/'/g,"\\'")}')">×</button>`
+    }</span>`
+  ).join('');
+}
+
+function delCategoria(nome) {
+  if (!confirm('Remover categoria "'+nome+'"?')) return;
+  D.categorias = D.categorias.filter(c => c.nome !== nome);
+  save(); renderConfig(); renderLancamentos();
+}
+function delCartao(nome) {
+  if (!confirm('Remover cartão "'+nome+'"?')) return;
+  D.cartoes = D.cartoes.filter(c => c !== nome);
+  save(); renderConfig(); renderCartao();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(D, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'financas_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+function importData(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (!parsed.lancamentos) throw new Error('inválido');
+      D = parsed; save(); render(); renderConfig();
+      alert('Dados importados com sucesso!');
+    } catch(err) { alert('Arquivo inválido. Use um JSON exportado por este app.'); }
+  };
+  reader.readAsText(f);
+  e.target.value = '';
+}
+function clearAll() {
+  D = { lancamentos:[], cartao:[], parcelamentos:[], categorias:[...DEFAULT_CATS], cartoes:[...DEFAULT_CARTOES] };
+  save(); render(); renderConfig();
+}
+
+function renderCharts() {
+  const { L, C, P } = getMonthItems();
+  const receitas    = L.filter(l => l.tipo==='receita').reduce((s,l)=>s+l.valor,0);
+  const despesas    = L.filter(l => l.tipo==='despesa').reduce((s,l)=>s+l.valor,0);
+  const cartaoMes   = C.reduce((s,c)=>s+c.valor,0);
+  const parcelasMes = P.filter(p=>!isParcPago(p)).reduce((s,p)=>s+(p.total/p.qtd),0);
+  const totalSaida  = despesas + cartaoMes + parcelasMes;
+  const poupanca    = Math.max(0, receitas - totalSaida);
+
+  if (chartB) chartB.destroy();
+  chartB = new Chart(document.getElementById('chart-balanco').getContext('2d'), {
+    type: 'bar',
+    data: { labels: ['Receitas','Despesas','Poupança'],
+      datasets: [{ data:[receitas,totalSaida,poupanca], backgroundColor:['#1D9E75','#E24B4A','#185FA5'], borderRadius:6, borderSkipped:false }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{ callback: v=>'R$'+Math.round(v) } } } }
+  });
+
+  const cats = {};
+  L.filter(l=>l.tipo==='despesa').forEach(l => { cats[l.categoria] = (cats[l.categoria]||0)+l.valor; });
+  if (cartaoMes > 0) cats['Cartão'] = (cats['Cartão']||0) + cartaoMes;
+  if (parcelasMes > 0) cats['Parcelamentos'] = (cats['Parcelamentos']||0) + parcelasMes;
+  const catKeys = Object.keys(cats);
+  const colors  = ['#1D9E75','#185FA5','#E24B4A','#BA7517','#534AB7','#D85A30','#D4537E','#639922','#888780','#0F6E56'];
+
+  if (chartC) chartC.destroy();
+  chartC = new Chart(document.getElementById('chart-categorias').getContext('2d'), {
+    type: 'doughnut',
+    data: { labels: catKeys.length ? catKeys : ['Sem dados'],
+      datasets: [{ data: catKeys.length ? catKeys.map(k=>cats[k]) : [1],
+        backgroundColor: catKeys.length ? colors.slice(0,catKeys.length) : ['#ddd'], borderWidth:0 }] },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'right', labels:{ font:{size:11}, boxWidth:12 } } } }
+  });
+
+  const saldo  = receitas - totalSaida;
+  const sit    = saldo > 0
+    ? `<span style="color:var(--green);font-weight:600">✓ Superavitário</span> — você tem ${fmt(saldo)} disponíveis para poupar.`
+    : saldo < 0
+    ? `<span style="color:var(--red);font-weight:600">⚠ Deficitário</span> — despesas superam as receitas em ${fmt(Math.abs(saldo))}.`
+    : `<span style="color:var(--amber);font-weight:600">= Neutro</span> — equilibrado. Tente reservar algo.`;
+  document.getElementById('analise-resumo').innerHTML =
+    `<p style="margin-bottom:8px">Situação: ${sit}</p>
+     <p>Receitas: <strong>${fmt(receitas)}</strong> &nbsp;·&nbsp; Saídas: <strong>${fmt(totalSaida)}</strong> &nbsp;·&nbsp; Saldo: <strong>${(saldo>=0?'+':'-')+fmt(saldo)}</strong></p>`;
+}
+
+function render() {
+  document.getElementById('month-label').textContent = MESES[curMonth] + ' ' + curYear;
+  updateSummary();
+  renderLancamentos();
+  renderCartao();
+  renderParcelamentos();
+  if (activeTab === 'analise') renderCharts();
+  if (activeTab === 'config') renderConfig();
+}
+
+// INIT
+(function init() {
+  const today = new Date();
+  document.getElementById('data-input').value  = today.toISOString().slice(0,10);
+  document.getElementById('parc-inicio').value = today.toISOString().slice(0,7);
+  addCatSel = D.categorias[0]?.nome || 'Moradia';
+
+  // Sync bottom nav with desktop tabs
+  document.querySelectorAll('.tabs .tab').forEach((btn, i) => {
+    const tabs = ['lancamentos','cartao','parcelamentos','analise','config'];
+    btn.setAttribute('data-tab', tabs[i]);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
