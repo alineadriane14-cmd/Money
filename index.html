@@ -256,8 +256,9 @@
         <div class="form-group"><label>Descrição</label><input type="text" id="cartao-desc" placeholder="Ex: iFood, Amazon..." /></div>
         <div class="form-group"><label>Valor (R$)</label><input type="number" id="cartao-valor" placeholder="0,00" step="0.01" min="0" /></div>
       </div>
-      <div class="form-row">
+      <div class="form-row-3">
         <div class="form-group"><label>Cartão</label><select id="cartao-nome"></select></div>
+        <div class="form-group"><label>Mês da fatura</label><input type="month" id="cartao-fatura" /></div>
         <div class="form-group"><label>Parcelas</label>
           <select id="cartao-parcelas">
             <option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option>
@@ -275,7 +276,7 @@
       <button class="btn primary" onclick="addCartao()"><i class="fa-solid fa-plus"></i> Registrar no cartão</button>
     </div>
     <div class="section">
-      <div class="section-title">Gastos no cartão — mês atual <span id="cartao-total-label" style="font-weight:400;font-size:12px;color:var(--text2)"></span></div>
+      <div class="section-title">Gastos no cartão — fatura do mês <span id="cartao-total-label" style="font-weight:400;font-size:12px;color:var(--text2)"></span></div>
       <div id="lista-cartao"><div class="empty-state"><i class="fa-solid fa-credit-card"></i>Nenhum gasto no cartão.</div></div>
     </div>
     <div class="dica"><strong>💡 Dica:</strong> Confira regularmente extratos e faturas. Cartão de crédito cobra juros se você não pagar o total da fatura.</div>
@@ -534,8 +535,10 @@ function getMonthItems(){
     const d=new Date(l.data+'T12:00:00');
     return d.getFullYear()===curYear&&d.getMonth()===curMonth;
   });
+  const curKey=curYear+"-"+String(curMonth+1).padStart(2,"0");
   const C=D.cartao.filter(c=>{
-    const d=new Date(c.data+'T12:00:00');
+    if(c.fatura) return c.fatura===curKey;
+    const d=new Date(c.data+"T12:00:00");
     return d.getFullYear()===curYear&&d.getMonth()===curMonth;
   });
   // Parcelamentos: a parcela pertence ao mês calculado a partir do mês inicial
@@ -729,7 +732,7 @@ function renderCartao(){
       <div class="item-icon" style="background:var(--blue-bg)">💳</div>
       <div class="item-info">
         <div class="item-name">${c.desc}${parcInfo}${statusBadge}</div>
-        <div class="item-meta">${c.cartao}</div>
+        <div class="item-meta">${c.cartao}${c.fatura?' · Fatura: '+MESES[parseInt(c.fatura.split('-')[1])-1].slice(0,3)+' '+c.fatura.split('-')[0]:''}</div>
       </div>
       <div class="item-amount ${pago?'credit':'pending'}">-${fmt(c.valor)}</div>
       <div class="item-actions">
@@ -746,17 +749,18 @@ function toggleCartaoPago(id){
   if(c){c.pago=!c.pago;save();render();}
 }
 function addCartao(){
-  const desc=document.getElementById('cartao-desc').value.trim();
-  const valor=parseFloat(document.getElementById('cartao-valor').value);
-  const cartao=document.getElementById('cartao-nome').value;
-  const parcelas=parseInt(document.getElementById('cartao-parcelas').value);
-  if(!desc||isNaN(valor)||valor<=0){alert('Preencha descrição e valor.');return;}
-  D.cartao.push({id:Date.now(),desc,valor,cartao,parcelas,data:new Date().toISOString().slice(0,10),pago:cartaoPagoState});
+  const desc=document.getElementById("cartao-desc").value.trim();
+  const valor=parseFloat(document.getElementById("cartao-valor").value);
+  const cartao=document.getElementById("cartao-nome").value;
+  const parcelas=parseInt(document.getElementById("cartao-parcelas").value);
+  const fatura=document.getElementById("cartao-fatura").value;
+  if(!desc||isNaN(valor)||valor<=0||!fatura){alert("Preencha descrição, valor e mês da fatura.");return;}
+  D.cartao.push({id:Date.now(),desc,valor,cartao,parcelas,fatura,data:new Date().toISOString().slice(0,10),pago:cartaoPagoState});
   save();
-  document.getElementById('cartao-desc').value='';
-  document.getElementById('cartao-valor').value='';
+  document.getElementById("cartao-desc").value="";
+  document.getElementById("cartao-valor").value="";
   cartaoPagoState=false;
-  applyToggle('toggle-pago-cartao','toggle-cartao-label',false);
+  applyToggle("toggle-pago-cartao","toggle-cartao-label",false);
   renderCartao();updateSummary();
 }
 
@@ -960,6 +964,7 @@ function render(){
   const today=new Date();
   document.getElementById('data-input').value=today.toISOString().slice(0,10);
   document.getElementById('parc-inicio').value=today.toISOString().slice(0,7);
+  document.getElementById('cartao-fatura').value=today.toISOString().slice(0,7);
   addCatSel=D.categorias[0]?.nome||'Moradia';
   applyToggle('toggle-pago-new','toggle-pago-label',true);
   applyToggle('toggle-pago-cartao','toggle-cartao-label',false);
@@ -974,8 +979,8 @@ function render(){
       {id:5,desc:'Freelance',valor:800,tipo:'receita',pagamento:'pix',categoria:'Salário',data:`${y}-${m}-28`,pago:false},
     ];
     D.cartao=[
-      {id:10,desc:'Netflix + Spotify',valor:65,cartao:'Nubank',parcelas:1,data:`${y}-${m}-03`,pago:true},
-      {id:11,desc:'Farmácia',valor:120,cartao:'Itaú',parcelas:1,data:`${y}-${m}-20`,pago:false},
+      {id:10,desc:'Netflix + Spotify',valor:65,cartao:'Nubank',parcelas:1,fatura:`${y}-${m}`,data:`${y}-${m}-03`,pago:true},
+      {id:11,desc:'Farmácia',valor:120,cartao:'Itaú',parcelas:1,fatura:`${y}-${m}`,data:`${y}-${m}-20`,pago:false},
     ];
     D.parcelamentos=[
       {id:20,desc:'Notebook',total:2400,qtd:12,inicio:`${y}-${m}`,pagas:[0]},
