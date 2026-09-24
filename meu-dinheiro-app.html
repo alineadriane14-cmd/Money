@@ -1,0 +1,2444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu Dinheiro</title>
+<style>
+:root { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: inherit; }
+html, body { height: 100%; margin: 0; }
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+.mdapp {
+  --paper: #FAF6EC;
+  --paper-card: #FFFFFF;
+  --paper-line: #E4DCC8;
+  --ink: #24312B;
+  --ink-soft: #6B776E;
+  --teal: #2F6F5E;
+  --teal-dark: #204A3F;
+  --teal-soft: #E4EEE9;
+  --rust: #B14A2E;
+  --rust-soft: #F6E4DD;
+  --gold: #C99A3C;
+  font-family: 'Inter', sans-serif;
+  color: var(--ink);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  background: linear-gradient(180deg, #EDE6D3 0%, #E3DCC7 100%);
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+}
+.mdapp *, .mdapp *::before, .mdapp *::after { box-sizing: border-box; }
+
+.phone {
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 40px rgba(0,0,0,0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-screen {
+  width: 100%;
+  text-align: center;
+  padding: 40px;
+  color: var(--ink-soft);
+  font-family: 'Fraunces', serif;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 8px;
+}
+.topbar-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+.topbar-btn {
+  background: var(--teal-soft);
+  border: none;
+  color: var(--teal-dark);
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.topbar-btn:hover { background: #d6e6df; }
+
+.balance-strip {
+  margin: 4px 18px 10px;
+  padding: 14px 16px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+}
+.balance-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.balance-label {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.balance-value {
+  font-family: 'Fraunces', serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 24px;
+  font-weight: 600;
+}
+.balance-value.positive { color: var(--teal-dark); }
+.balance-value.negative { color: var(--rust); }
+.balance-bar {
+  margin-top: 10px;
+  height: 6px;
+  background: var(--teal-soft);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.balance-bar-fill {
+  height: 100%;
+  background: var(--rust);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.balance-sub {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-panel {
+  margin: 0 18px 10px;
+  padding: 12px 14px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+}
+.summary-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.summary-empty {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding: 4px 0;
+}
+.summary-card-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-top: 1px dashed var(--paper-line);
+}
+.summary-card-row:first-of-type { border-top: none; }
+.summary-card-name { display: flex; align-items: center; gap: 6px; color: var(--ink); }
+.summary-card-fatura { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.save-error { margin-top: 8px; font-size: 11.5px; color: var(--rust); }
+
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--teal) transparent;
+}
+.chat-scroll::-webkit-scrollbar { width: 7px; }
+.chat-scroll::-webkit-scrollbar-track { background: transparent; }
+.chat-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--teal);
+  border-radius: 8px;
+  border: 2px solid var(--paper);
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover { background-color: var(--teal-dark); }
+
+.msg-row { display: flex; }
+.row-user { justify-content: flex-end; }
+.row-bot { justify-content: flex-start; }
+
+.bubble {
+  max-width: 84%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.42;
+}
+.bubble-user {
+  background: var(--teal);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.bubble-bot {
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  color: var(--ink);
+  border-bottom-left-radius: 4px;
+}
+.bubble-draft { padding: 12px; min-width: 220px; }
+
+.picker-title { font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
+.picker-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.chip:hover { background: #d6e6df; }
+.chip-add { border-style: dashed; background: transparent; color: var(--ink-soft); border-color: var(--paper-line); }
+
+.confirm-card { display: flex; flex-direction: column; gap: 8px; }
+.confirm-row { display: flex; align-items: center; gap: 8px; }
+.tipo-dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-despesa { background: var(--rust); }
+.dot-receita { background: var(--teal); }
+.confirm-tipo { font-size: 12.5px; color: var(--ink-soft); flex: 1; }
+.confirm-valor {
+  font-family: 'Fraunces', serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 19px;
+  font-weight: 600;
+}
+.confirm-meta { font-size: 13px; color: var(--ink-soft); }
+.dot-sep { margin: 0 5px; }
+.confirm-parcelas {
+  font-size: 12px;
+  color: var(--gold);
+  background: #FBF1DC;
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.class-toggle { display: flex; gap: 6px; }
+.class-toggle-wrap { flex-wrap: wrap; }
+.class-toggle-wrap .pill { flex: none; padding: 6px 12px; }
+.pill {
+  flex: 1;
+  padding: 7px 0;
+  border-radius: 9px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.pill-active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+.inline-form { display: flex; flex-direction: column; gap: 9px; }
+.inline-form-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.inline-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-soft); }
+.inline-form input {
+  font-family: 'Inter', sans-serif;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--paper-line);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+}
+.inline-form input:focus { outline: 2px solid var(--teal); outline-offset: 0; }
+.inline-form-row { display: flex; gap: 8px; }
+.inline-form-row label { flex: 1; }
+
+.inline-form-actions { display: flex; gap: 8px; margin-top: 4px; }
+.btn-primary, .btn-ghost {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-dark); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--paper-line); }
+.btn-sm { flex: none; padding: 5px 10px; font-size: 12px; display: flex; align-items: center; gap: 3px; }
+
+.done-note {
+  font-size: 13px;
+  color: var(--ink);
+}
+.done-note.muted { color: var(--ink-soft); font-style: italic; }
+
+.composer {
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--paper-line);
+  background: var(--paper);
+}
+.composer input {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper-card);
+  font-family: 'Inter', sans-serif;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+.composer input:focus { outline: 2px solid var(--teal); outline-offset: 0; }
+.composer button {
+  width: 42px;
+  border-radius: 12px;
+  border: none;
+  background: var(--teal);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.composer button:hover { background: var(--teal-dark); }
+.composer button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.bottom-tabs {
+  display: flex;
+  border-top: 1px solid var(--paper-line);
+  background: var(--paper-card);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 0 8px;
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.tab-btn.tab-active { color: var(--teal-dark); }
+
+.lanc-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+.filter-bar {
+  padding: 4px 18px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-color: var(--paper-line);
+  background: var(--paper-card);
+  color: var(--ink-soft);
+}
+.chip-active {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  font-weight: 600;
+}
+.filter-select {
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper-card);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-family: 'Inter', sans-serif;
+}
+
+.lanc-totals {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 18px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--paper-line);
+}
+.lanc-total-receita { color: var(--teal-dark); }
+.lanc-total-despesa { color: var(--rust); }
+
+.lanc-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 18px 14px;
+}
+.lanc-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  padding: 30px 10px;
+}
+.lanc-date-head {
+  font-size: 11.5px;
+  text-transform: capitalize;
+  color: var(--ink-soft);
+  padding: 12px 2px 4px;
+}
+.lanc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 2px;
+  border-top: 1px dashed var(--paper-line);
+  gap: 8px;
+}
+.lanc-row:first-of-type { border-top: none; }
+.lanc-row-main { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.lanc-row-main .tipo-dot { margin-top: 6px; flex-shrink: 0; }
+.lanc-row-info { min-width: 0; }
+.lanc-row-cat {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lanc-row-meta {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  margin-top: 1px;
+}
+.lanc-row-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.lanc-valor {
+  font-variant-numeric: tabular-nums;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.valor-despesa { color: var(--rust); }
+.valor-receita { color: var(--teal-dark); }
+.lanc-delete-btn {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+}
+.lanc-delete-btn:hover { color: var(--rust); }
+.lanc-row-actions { display: flex; align-items: center; gap: 2px; }
+.lanc-row-editing { padding: 10px 0; border-top: 1px dashed var(--paper-line); }
+.lanc-delete-confirm { display: flex; gap: 4px; }
+.btn-xs {
+  padding: 5px 8px;
+  font-size: 11px;
+  border-radius: 7px;
+  flex: none;
+}
+.btn-danger {
+  background: var(--rust);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cartao-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+.cartao-empty {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  color: var(--ink-soft);
+  padding-top: 60px;
+}
+.cartao-empty .btn-primary { flex: none; padding: 9px 18px; }
+.cartao-switch { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; }
+.cartao-hero {
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  padding: 16px;
+}
+.cartao-hero-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink-soft); margin-bottom: 4px;
+}
+.cartao-hero-fatura {
+  font-family: 'Fraunces', serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.cartao-hero-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.cartao-hero-dates { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+.cartao-hero-limit { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.fatura-status {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.fatura-status-paga { color: var(--teal-dark); }
+.fatura-status-atrasada { color: var(--rust); font-weight: 600; }
+.atraso-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rust);
+  display: inline-block;
+  flex: none;
+}
+.fatura-status .link-btn { margin-left: auto; font-size: 11.5px; }
+.cartao-pagar-btn { margin-top: 10px; align-self: flex-start; flex: none; padding: 7px 14px; }
+.cartao-compromisso {
+  font-size: 12.5px;
+  color: var(--gold);
+  background: #FBF1DC;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.cartao-section-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.cartao-tx-list { display: flex; flex-direction: column; }
+.cartao-danger { margin-top: 6px; }
+.cartao-danger-label { font-size: 12px; color: var(--ink-soft); flex: 1; }
+
+.cat-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.cat-filter-row { padding-top: 4px; }
+.cat-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  padding: 16px;
+}
+.cat-donut {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.cat-donut-hole {
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  background: var(--paper-card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.cat-donut-total {
+  font-family: 'Fraunces', serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+}
+.cat-donut-sub { font-size: 10px; color: var(--ink-soft); }
+.cat-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.cat-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.cat-legend-val {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cat-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.cat-dot-necessidade { background: var(--teal); }
+.cat-dot-desejo { background: var(--gold); }
+.cat-dot-outro { background: var(--paper-line); border: 1px solid var(--ink-soft); }
+
+.cat-bar-list { display: flex; flex-direction: column; gap: 10px; }
+.cat-bar-row { display: flex; flex-direction: column; gap: 4px; }
+.cat-bar-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+.cat-bar-val { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.cat-bar-track {
+  height: 7px;
+  background: var(--teal-soft);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.cat-bar-fill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 4px;
+}
+.cat-tags-manage { display: flex; flex-direction: column; gap: 8px; }
+.cat-tags-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-tag-fixed { cursor: default; }
+.cat-tag-removable { display: flex; align-items: center; gap: 5px; padding-right: 6px; }
+.cat-tag-removable button {
+  background: none;
+  border: none;
+  color: var(--teal-dark);
+  display: flex;
+  cursor: pointer;
+  padding: 0;
+}
+.cat-tags-add { display: flex; gap: 6px; }
+.cat-tags-add input {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--paper-line);
+  background: var(--paper-card);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+}
+.cat-tags-add .btn-sm { flex: none; }
+
+.metas-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.metas-empty-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.metas-empty-actions button { flex: none; }
+.metas-add-row { display: flex; justify-content: flex-end; }
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--teal-dark);
+  font-weight: 600;
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.inline-form-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 7px !important;
+  font-size: 13px !important;
+  color: var(--ink) !important;
+}
+.inline-form-checkbox input { width: auto; padding: 0; }
+
+.metas-list { display: flex; flex-direction: column; gap: 10px; }
+.meta-card {
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.meta-card-head { display: flex; justify-content: space-between; align-items: center; }
+.meta-card-name { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.meta-card-values {
+  font-family: 'Fraunces', serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.meta-card-target { font-family: 'Inter', sans-serif; font-size: 12.5px; font-weight: 400; color: var(--ink-soft); }
+.meta-card-sub { font-size: 11.5px; color: var(--ink-soft); text-transform: capitalize; }
+.fill-teal { background: var(--teal); }
+.fill-gold { background: var(--gold); }
+.meta-aportar-btn { align-self: flex-start; flex: none; padding: 6px 12px; }
+.meta-aporte-row { display: flex; gap: 6px; align-items: center; }
+.meta-aporte-row input { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .balance-bar-fill { transition: none; }
+}
+
+.view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.view[hidden] { display: none; }
+.placeholder-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 30px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.placeholder-view b { color: var(--ink); }
+.data-actions-row { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.data-actions-row .btn-ghost { justify-content: flex-start; }
+.import-msg { margin-top: 8px; font-size: 11.5px; padding: 6px 8px; border-radius: 8px; }
+.import-msg.ok { color: var(--teal-dark); background: var(--teal-soft); }
+.import-msg.err { color: var(--rust); background: var(--rust-soft); }
+</style>
+</head>
+<body>
+<div class="mdapp">
+  <div class="phone">
+    <header class="topbar">
+      <div class="topbar-title">Meu Dinheiro</div>
+      <button type="button" class="topbar-btn" id="btnSummary" aria-label="Resumo">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.6" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </header>
+
+    <div class="balance-strip">
+      <div class="balance-top">
+        <span class="balance-label" id="balanceLabel">Saldo</span>
+        <span class="balance-value" id="balanceValue">R$ 0,00</span>
+      </div>
+      <div class="balance-bar"><div class="balance-bar-fill" id="balanceBarFill" style="width:0%"></div></div>
+      <div class="balance-sub">
+        <span id="balanceReceitas">Receitas R$ 0,00</span>
+        <span id="balanceDespesas">Despesas R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="summary-panel" id="summaryPanel" hidden>
+      <div class="summary-panel-head">
+        <span>Cartões</span>
+      </div>
+      <div id="summaryCardsList"></div>
+      <div class="save-error" id="saveError" hidden>Não foi possível salvar os dados agora. Tente novamente em instantes.</div>
+      <div class="summary-panel-head" style="margin-top:14px;">
+        <span>Dados</span>
+      </div>
+      <div class="data-actions-row">
+        <button type="button" class="btn-ghost btn-sm" id="btnExportData">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar dados
+        </button>
+        <button type="button" class="btn-ghost btn-sm" id="btnImportData">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importar dados
+        </button>
+        <input type="file" id="importFileInput" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="import-msg" id="importMsg" hidden></div>
+    </div>
+
+    <div class="view" id="view-chat">
+      <main class="chat-scroll" id="chatScroll"></main>
+      <div class="composer">
+        <input id="chatInput" placeholder="Ex: 50 mercado pix" aria-label="Digitar lançamento" autocomplete="off" />
+        <button type="button" id="btnSend" aria-label="Enviar">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="view" id="view-lancamentos" hidden>
+      <div class="lanc-view" id="lancView"></div>
+    </div>
+    <div class="view" id="view-cartao" hidden>
+      <div class="cartao-view" id="cartaoView"></div>
+    </div>
+    <div class="view" id="view-categorias" hidden>
+      <div class="cat-view" id="catView"></div>
+    </div>
+    <div class="view" id="view-metas" hidden>
+      <div class="metas-view" id="metasView"></div>
+    </div>
+    <div class="view" id="view-negociacoes" hidden>
+      <div class="metas-view" id="negView"></div>
+    </div>
+
+    <nav class="bottom-tabs">
+      <button type="button" class="tab-btn tab-active" data-tab="chat">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        <span>Chat</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="lancamentos">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18l-3-2-3 2-3-2-3 2-3-2-3 2V3z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Lanç.</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="cartao">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>Cartão</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="categorias">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 15a9 9 0 1 1-9.2-9v9z"/><path d="M12 3a9 9 0 0 1 9 9h-9V3z"/></svg>
+        <span>Categ.</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="metas">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>
+        <span>Metas</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="negociacoes">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="4" y1="10" x2="20" y2="10"/><polygon points="12 3 20 10 4 10 12 3"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/></svg>
+        <span>Negoc.</span>
+      </button>
+    </nav>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   MEU DINHEIRO — versão app (JS puro, localStorage)
+   ========================================================================= */
+
+var STORAGE_KEY = "meu-dinheiro-store-v1";
+
+var MESES = [
+  "janeiro","fevereiro","março","abril","maio","junho",
+  "julho","agosto","setembro","outubro","novembro","dezembro",
+];
+
+var PAGAMENTO_LABEL = {
+  pix: "Pix",
+  dinheiro: "Dinheiro",
+  debito: "Débito",
+  cartao: "Cartão",
+  negociacao: "Negociação",
+};
+
+var NECESSIDADE_WORDS = [
+  "mercado","supermercado","farmacia","remedio","saude","transporte","uber",
+  "gasolina","combustivel","moradia","aluguel","conta","luz","agua","internet",
+  "telefone","educacao","escola","condominio","feira","padaria","onibus",
+  "consulta","plano de saude","material escolar",
+];
+var DESEJO_WORDS = [
+  "lazer","roupa","roupas","restaurante","viagem","cinema","presente","jogo",
+  "bar","festa","tenis","eletronico","streaming","delivery","ifood","show",
+  "balada","shopping","perfume","maquiagem","games","hobby",
+];
+
+function stripAccents(s) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function accentInsensitivePattern(word) {
+  var map = { a: "[aàáâã]", e: "[eéê]", i: "[iíî]", o: "[oóôõ]", u: "[uúü]", c: "[cç]" };
+  return word
+    .split("")
+    .map(function (ch) { return map[ch] || ch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); })
+    .join("");
+}
+function wordRegex(word) {
+  return new RegExp("\\b" + accentInsensitivePattern(word) + "\\b", "i");
+}
+
+function parseValorBR(str) {
+  str = str.replace(/^r\$\s*/i, "").trim();
+  if (str.indexOf(".") !== -1 && str.indexOf(",") !== -1) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  } else if (str.indexOf(",") !== -1) {
+    str = str.replace(",", ".");
+  }
+  return parseFloat(str);
+}
+
+function formatCurrency(v) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
+}
+
+function guessClassification(categoria) {
+  var c = stripAccents(categoria.toLowerCase());
+  if (NECESSIDADE_WORDS.some(function (w) { return c.indexOf(w) !== -1; })) return "necessidade";
+  if (DESEJO_WORDS.some(function (w) { return c.indexOf(w) !== -1; })) return "desejo";
+  return null;
+}
+
+function parseMessage(rawText, cards) {
+  var text = rawText.trim();
+  if (!text) return { error: "vazio" };
+  var w = " " + text + " ";
+
+  var parcelas = 1;
+  var m1 = w.match(/\bem\s+(\d+)\s*vezes\b/i);
+  var m2 = !m1 && w.match(/\b(\d+)\s*x\b/i);
+  if (m1) { parcelas = parseInt(m1[1], 10); w = w.replace(m1[0], " "); }
+  else if (m2) { parcelas = parseInt(m2[1], 10); w = w.replace(m2[0], " "); }
+  if (!parcelas || parcelas < 1) parcelas = 1;
+
+  var valorStr = null;
+  var vm = w.match(/r\$\s*([\d.,]+)/i);
+  if (vm) { valorStr = vm[1]; w = w.replace(vm[0], " "); }
+  else {
+    var gm = w.match(/\d{1,3}(?:\.\d{3})*,\d{2}|\d+(?:[.,]\d{1,2})?/);
+    if (gm) { valorStr = gm[0]; w = w.replace(gm[0], " "); }
+  }
+  if (!valorStr) return { error: "novalor" };
+  var valor = parseValorBR(valorStr);
+  if (isNaN(valor) || valor <= 0) return { error: "novalor" };
+
+  var RECEITA_WORDS = ["salario","recebi","receb","ganhei","renda","freelance","freela","entrada","receita"];
+  var tipo = "despesa";
+  for (var i = 0; i < RECEITA_WORDS.length; i++) {
+    var re = wordRegex(RECEITA_WORDS[i]);
+    if (re.test(w)) { tipo = "receita"; w = w.replace(re, " "); break; }
+  }
+  ["gasto", "despesa", "paguei", "comprei", "gastei"].forEach(function (fw) {
+    w = w.replace(wordRegex(fw), " ");
+  });
+
+  var cardId = null;
+  for (var j = 0; j < cards.length; j++) {
+    var c = cards[j];
+    if (!c.name) continue;
+    var rec = wordRegex(c.name);
+    if (rec.test(w)) { cardId = c.id; w = w.replace(rec, " "); break; }
+  }
+  var pagamento = null;
+  if (wordRegex("pix").test(w)) { pagamento = "pix"; w = w.replace(wordRegex("pix"), " "); }
+  else if (wordRegex("dinheiro").test(w) || wordRegex("especie").test(w)) {
+    pagamento = "dinheiro";
+    w = w.replace(wordRegex("dinheiro"), " ").replace(wordRegex("especie"), " ");
+  } else if (wordRegex("debito").test(w)) {
+    pagamento = "debito";
+    w = w.replace(wordRegex("debito"), " ");
+  } else if (wordRegex("cartao").test(w) || wordRegex("credito").test(w)) {
+    pagamento = "cartao";
+    w = w.replace(wordRegex("cartao"), " ").replace(wordRegex("credito"), " ");
+  } else if (cardId) {
+    pagamento = "cartao";
+  }
+  if (parcelas > 1) pagamento = "cartao";
+  if (pagamento === "pix" || pagamento === "dinheiro") cardId = null;
+
+  var leftover = w.replace(/\s+/g, " ").trim().replace(/^[-,.:;]+|[-,.:;]+$/g, "").trim();
+  leftover = leftover.replace(/\b(em|de|do|da|no|na)\b/gi, " ").replace(/\s+/g, " ").trim();
+  var categoria;
+  if (!leftover) categoria = tipo === "receita" ? "Receita" : "Outros";
+  else categoria = leftover.charAt(0).toUpperCase() + leftover.slice(1);
+
+  var classificacao = tipo === "receita" ? null : guessClassification(categoria);
+
+  return { tipo: tipo, valor: valor, pagamento: pagamento, cardId: cardId, parcelas: parcelas, categoria: categoria, classificacao: classificacao, rawText: text };
+}
+
+function computeStatus(draft, cards) {
+  if (!draft.pagamento) return "needPayment";
+  if ((draft.pagamento === "cartao" || draft.pagamento === "debito") && !draft.cardId) {
+    if (cards.length === 0) return "cardForm";
+    if (cards.length === 1) { draft.cardId = cards[0].id; return "confirm"; }
+    return "cardPicker";
+  }
+  return "confirm";
+}
+
+function buildTransactions(draft) {
+  var n = draft.parcelas || 1;
+  var base = new Date();
+  var parcelaValor = Math.round((draft.valor / n) * 100) / 100;
+  var groupId = n > 1 ? "grp-" + Date.now() : null;
+  var allocated = 0;
+  var txs = [];
+  for (var i = 0; i < n; i++) {
+    var d = new Date(base.getFullYear(), base.getMonth() + i, base.getDate());
+    var value = parcelaValor;
+    if (i === n - 1) value = Math.round((draft.valor - allocated) * 100) / 100;
+    else allocated += parcelaValor;
+    txs.push({
+      id: "tx-" + Date.now() + "-" + i + "-" + Math.random().toString(36).slice(2, 7),
+      tipo: draft.tipo,
+      valor: value,
+      categoria: draft.categoria,
+      classificacao: draft.classificacao || "Não classificado",
+      pagamento: draft.pagamento,
+      cardId: draft.cardId || null,
+      parcelaAtual: n > 1 ? i + 1 : null,
+      totalParcelas: n > 1 ? n : null,
+      parcelamentoId: groupId,
+      data: d.toISOString(),
+    });
+  }
+  return txs;
+}
+
+function computeSaldoMes(transactions) {
+  var now = new Date();
+  var receitas = 0, despesas = 0;
+  transactions.forEach(function (t) {
+    var d = new Date(t.data);
+    if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+      if (t.tipo === "receita") receitas += t.valor;
+      else despesas += t.valor;
+    }
+  });
+  return { receitas: receitas, despesas: despesas, saldo: receitas - despesas };
+}
+
+function sameMonth(dateStr, now) {
+  var d = new Date(dateStr);
+  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+}
+
+function diasAtrasoFatura(card, faturaValor, pagaRecord, now) {
+  if (!card.dueDay || faturaValor <= 0 || pagaRecord) return 0;
+  var hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var vencimento = new Date(now.getFullYear(), now.getMonth(), card.dueDay);
+  var diff = Math.floor((hoje - vencimento) / 86400000);
+  return diff > 0 ? diff : 0;
+}
+
+function computeSuggestedReserve(transactions) {
+  var despesas = transactions.filter(function (t) { return t.tipo === "despesa"; });
+  if (despesas.length === 0) return null;
+  var byMonth = {};
+  despesas.forEach(function (t) {
+    var d = new Date(t.data);
+    var key = d.getFullYear() + "-" + d.getMonth();
+    byMonth[key] = (byMonth[key] || 0) + t.valor;
+  });
+  var months = Object.keys(byMonth).map(function (k) { return byMonth[k]; });
+  if (months.length === 0) return null;
+  var avg = months.reduce(function (s, v) { return s + v; }, 0) / months.length;
+  return avg * 6;
+}
+
+function negociacaoValorParcela(neg) {
+  var n = neg.parcelas || 1;
+  return Math.round((neg.valorTotal / n) * 100) / 100;
+}
+
+function negociacaoProximaParcela(neg) {
+  var n = neg.parcelas || 1;
+  var pagas = Math.min(neg.parcelasPagas || 0, n);
+  var parcela = negociacaoValorParcela(neg);
+  if (pagas >= n - 1) return Math.round((neg.valorTotal - parcela * (n - 1)) * 100) / 100;
+  return parcela;
+}
+
+function negociacaoSaldoDevedor(neg) {
+  var n = neg.parcelas || 1;
+  var pagas = Math.min(neg.parcelasPagas || 0, n);
+  var parcela = negociacaoValorParcela(neg);
+  return Math.max(0, Math.round((neg.valorTotal - parcela * pagas) * 100) / 100);
+}
+
+function passesFilter(t, filtros, now) {
+  if (filtros.periodo === "mes") {
+    var d = new Date(t.data);
+    if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+  }
+  if (filtros.tipo !== "todos" && t.tipo !== filtros.tipo) return false;
+  if (filtros.classificacao !== "todos" && t.classificacao !== filtros.classificacao) return false;
+  if (filtros.pagamento !== "todos") {
+    if (filtros.pagamento === "pix" && t.pagamento !== "pix") return false;
+    if (filtros.pagamento === "dinheiro" && t.pagamento !== "dinheiro") return false;
+    if (filtros.pagamento.indexOf("card:") === 0) {
+      var cid = filtros.pagamento.slice(5);
+      if (t.cardId !== cid) return false;
+    }
+  }
+  return true;
+}
+
+function newId(prefix) {
+  return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+}
+
+function escapeHTML(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function labelForTag(tag) {
+  if (tag === "necessidade") return "Necessidade";
+  if (tag === "desejo") return "Desejo";
+  return tag;
+}
+
+/* ------------------------------ estado / storage -------------------------- */
+
+function initialStore() {
+  return {
+    cards: [],
+    transactions: [],
+    metas: [],
+    classTags: [],
+    faturasPagas: [],
+    negociacoes: [],
+    messages: [
+      {
+        id: newId("msg"),
+        from: "bot",
+        kind: "text",
+        text:
+          "Oi! Manda um gasto ou receita em uma linha, do seu jeito. Exemplos:\n" +
+          "• 50 mercado pix\n" +
+          "• salário 3000\n" +
+          "• 120 farmácia cartão\n" +
+          "• tênis 300 em 3x nubank",
+      },
+    ],
+    drafts: {},
+  };
+}
+
+function loadStore() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialStore();
+    var data = JSON.parse(raw);
+    if (!data.metas) data.metas = [];
+    if (!data.classTags) data.classTags = [];
+    if (!data.faturasPagas) data.faturasPagas = [];
+    if (!data.negociacoes) data.negociacoes = [];
+    if (!data.drafts) data.drafts = {};
+    if (!data.cards) data.cards = [];
+    if (!data.transactions) data.transactions = [];
+    if (!data.messages) data.messages = [];
+    return data;
+  } catch (e) {
+    return initialStore();
+  }
+}
+
+function saveStore(next) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    document.getElementById("saveError").hidden = true;
+  } catch (e) {
+    document.getElementById("saveError").hidden = false;
+  }
+}
+
+function healStoreData(data) {
+  if (!data || typeof data !== "object") return null;
+  if (!Array.isArray(data.cards)) data.cards = [];
+  if (!Array.isArray(data.transactions)) data.transactions = [];
+  if (!Array.isArray(data.metas)) data.metas = [];
+  if (!Array.isArray(data.classTags)) data.classTags = [];
+  if (!Array.isArray(data.faturasPagas)) data.faturasPagas = [];
+  if (!Array.isArray(data.negociacoes)) data.negociacoes = [];
+  if (!Array.isArray(data.messages)) data.messages = [];
+  if (!data.drafts || typeof data.drafts !== "object") data.drafts = {};
+  return data;
+}
+
+function showImportMsg(text, ok) {
+  var el = document.getElementById("importMsg");
+  el.textContent = text;
+  el.className = "import-msg " + (ok ? "ok" : "err");
+  el.hidden = false;
+}
+
+function handleExportData() {
+  var blob = new Blob([JSON.stringify(store, null, 2)], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  var hoje = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = "meu-dinheiro-backup-" + hoje + ".json";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showImportMsg("Backup exportado.", true);
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function () {
+    var parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (e) {
+      showImportMsg("Arquivo inválido: não é um JSON válido.", false);
+      return;
+    }
+    var healed = healStoreData(parsed);
+    if (!healed) {
+      showImportMsg("Arquivo inválido: formato não reconhecido.", false);
+      return;
+    }
+    var confirmMsg = "Isso vai substituir todos os dados atuais pelos do arquivo importado. Continuar?";
+    if (!window.confirm(confirmMsg)) return;
+    store = healed;
+    saveStore(store);
+    render();
+    showImportMsg("Dados importados com sucesso.", true);
+  };
+  reader.onerror = function () {
+    showImportMsg("Não foi possível ler o arquivo.", false);
+  };
+  reader.readAsText(file);
+}
+
+var store = loadStore();
+
+var uiState = {
+  filtros: { periodo: "mes", tipo: "todos", classificacao: "todos", pagamento: "todos" },
+  editingTxId: null,
+  editClass: null,
+  deletingTxId: null,
+  selectedCardId: null,
+  addingCard: false,
+  deletingCardId: null,
+  periodoCategorias: "mes",
+  addingMeta: false,
+  aportingId: null,
+  aporteValor: "",
+  deletingMetaId: null,
+  addingNeg: false,
+  deletingNegId: null,
+};
+
+
+function mutate(fn) {
+  store = fn(store);
+  saveStore(store);
+  render();
+}
+
+function pushMessage(list, msg) {
+  var m = { id: newId("msg"), createdAt: Date.now() };
+  for (var k in msg) m[k] = msg[k];
+  return list.concat([m]);
+}
+
+/* --------------------------------- ações ---------------------------------- */
+
+function handleSubmit() {
+  var input = document.getElementById("chatInput");
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  mutate(function (prev) {
+    var messages = pushMessage(prev.messages, { from: "user", kind: "text", text: text });
+    var parsed = parseMessage(text, prev.cards);
+    if (parsed.error === "novalor") {
+      messages = pushMessage(messages, {
+        from: "bot",
+        kind: "text",
+        text: 'Não consegui identificar o valor. Tente algo como "50 mercado pix".',
+      });
+      return Object.assign({}, prev, { messages: messages });
+    }
+    var status = computeStatus(parsed, prev.cards);
+    var draftId = newId("draft");
+    var draft = Object.assign({}, parsed, { id: draftId, status: status });
+    messages = pushMessage(messages, { from: "bot", kind: "draft", draftId: draftId });
+    var drafts = Object.assign({}, prev.drafts);
+    drafts[draftId] = draft;
+    return Object.assign({}, prev, { messages: messages, drafts: drafts });
+  });
+}
+
+var draftActions = {
+  pickPayment: function (draftId, payment) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var nd = Object.assign({}, d, { pagamento: payment });
+      nd.status = computeStatus(nd, prev.cards);
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = nd;
+      return Object.assign({}, prev, { drafts: drafts });
+    });
+  },
+  pickCard: function (draftId, cardId) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = Object.assign({}, d, { cardId: cardId, status: "confirm" });
+      return Object.assign({}, prev, { drafts: drafts });
+    });
+  },
+  newCardFrom: function (draftId) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = Object.assign({}, d, { status: "cardForm" });
+      return Object.assign({}, prev, { drafts: drafts });
+    });
+  },
+  registerCard: function (draftId, vals) {
+    mutate(function (prev) {
+      var newCard = {
+        id: newId("card"),
+        name: vals.name.trim(),
+        closingDay: vals.closingDay ? Number(vals.closingDay) : null,
+        dueDay: vals.dueDay ? Number(vals.dueDay) : null,
+        limit: vals.limit ? parseValorBR(vals.limit) : null,
+      };
+      var cards = prev.cards.concat([newCard]);
+      var d = prev.drafts[draftId];
+      var drafts = prev.drafts;
+      if (d) {
+        var standalone = !!d.standalone;
+        var categoria = d.categoria;
+        if (!standalone && categoria) {
+          categoria = categoria.replace(wordRegex(newCard.name), " ")
+            .replace(/\b(em|de|do|da|no|na)\b/gi, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          categoria = categoria ? categoria.charAt(0).toUpperCase() + categoria.slice(1) : "Outros";
+        }
+        var nd = Object.assign({}, d, {
+          categoria: standalone ? d.categoria : categoria,
+          cardId: newCard.id,
+          status: standalone ? "done" : "confirm",
+        });
+        drafts = Object.assign({}, drafts);
+        drafts[draftId] = nd;
+      }
+      return Object.assign({}, prev, { cards: cards, drafts: drafts });
+    });
+  },
+  toggleClass: function (draftId, value) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var nd = Object.assign({}, d, { classificacao: d.classificacao === value ? null : value });
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = nd;
+      return Object.assign({}, prev, { drafts: drafts });
+    });
+  },
+  confirm: function (draftId) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var txs = buildTransactions(d);
+      var transactions = prev.transactions.concat(txs);
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = Object.assign({}, d, { status: "done" });
+      var messages = prev.messages;
+      var saldo = computeSaldoMes(transactions).saldo;
+      if (saldo < 0) {
+        messages = pushMessage(messages, {
+          from: "bot",
+          kind: "text",
+          text: "⚠️ As despesas do mês já superam as receitas. A regra de ouro é gastar menos do que se recebe — vale revisar o orçamento.",
+        });
+      }
+      return Object.assign({}, prev, { transactions: transactions, drafts: drafts, messages: messages });
+    });
+  },
+  cancel: function (draftId) {
+    mutate(function (prev) {
+      var d = prev.drafts[draftId];
+      if (!d) return prev;
+      var drafts = Object.assign({}, prev.drafts);
+      drafts[draftId] = Object.assign({}, d, { status: "cancelled" });
+      return Object.assign({}, prev, { drafts: drafts });
+    });
+  },
+};
+
+/* ------------------------- handlers: lançamentos --------------------------- */
+
+function handleDeleteTransaction(id) {
+  mutate(function (prev) {
+    return Object.assign({}, prev, { transactions: prev.transactions.filter(function (t) { return t.id !== id; }) });
+  });
+}
+
+function handleEditTransaction(id, patch) {
+  mutate(function (prev) {
+    var transactions = prev.transactions.map(function (t) {
+      return t.id === id ? Object.assign({}, t, patch) : t;
+    });
+    return Object.assign({}, prev, { transactions: transactions });
+  });
+}
+
+/* ---------------------------- handlers: cartão ------------------------------ */
+
+function handleRegisterCardDirect(vals) {
+  var newCard = {
+    id: newId("card"),
+    name: vals.name.trim(),
+    closingDay: vals.closingDay ? Number(vals.closingDay) : null,
+    dueDay: vals.dueDay ? Number(vals.dueDay) : null,
+    limit: vals.limit ? parseValorBR(vals.limit) : null,
+  };
+  uiState.selectedCardId = newCard.id;
+  mutate(function (prev) { return Object.assign({}, prev, { cards: prev.cards.concat([newCard]) }); });
+}
+
+function handleDeleteCard(cardId) {
+  uiState.selectedCardId = null;
+  mutate(function (prev) { return Object.assign({}, prev, { cards: prev.cards.filter(function (c) { return c.id !== cardId; }) }); });
+}
+
+function handleMarkFaturaPaga(cardId, mesAno) {
+  mutate(function (prev) {
+    var existente = (prev.faturasPagas || []).find(function (f) { return f.cardId === cardId && f.mesAno === mesAno; });
+    if (existente) return prev;
+    var registro = { id: newId("fatura"), cardId: cardId, mesAno: mesAno, pagoEm: new Date().toISOString() };
+    return Object.assign({}, prev, { faturasPagas: (prev.faturasPagas || []).concat([registro]) });
+  });
+}
+
+function handleUnmarkFaturaPaga(id) {
+  mutate(function (prev) {
+    return Object.assign({}, prev, { faturasPagas: (prev.faturasPagas || []).filter(function (f) { return f.id !== id; }) });
+  });
+}
+
+/* ------------------------------ handlers: categorias ------------------------ */
+
+function handleAddClassTag(name) {
+  var clean = name.trim();
+  if (!clean) return;
+  var label = clean.charAt(0).toUpperCase() + clean.slice(1);
+  mutate(function (prev) {
+    var existing = prev.classTags || [];
+    if (existing.some(function (t) { return t.toLowerCase() === label.toLowerCase(); }) ||
+        label.toLowerCase() === "necessidade" || label.toLowerCase() === "desejo") {
+      return prev;
+    }
+    return Object.assign({}, prev, { classTags: existing.concat([label]) });
+  });
+}
+
+function handleRemoveClassTag(name) {
+  mutate(function (prev) {
+    return Object.assign({}, prev, { classTags: (prev.classTags || []).filter(function (t) { return t !== name; }) });
+  });
+}
+
+/* -------------------------------- handlers: metas ---------------------------- */
+
+function handleAddMeta(vals) {
+  var meta = {
+    id: newId("meta"),
+    nome: vals.nome.trim(),
+    valorAlvo: parseValorBR(vals.valorAlvo) || 0,
+    valorAtual: 0,
+    prazo: vals.prazo || null,
+    tipo: vals.tipo || "normal",
+  };
+  mutate(function (prev) { return Object.assign({}, prev, { metas: (prev.metas || []).concat([meta]) }); });
+}
+
+function handleAportar(metaId, valorStr) {
+  var valor = parseValorBR(valorStr);
+  if (isNaN(valor) || valor <= 0) return;
+  mutate(function (prev) {
+    var metas = (prev.metas || []).map(function (m) {
+      return m.id === metaId ? Object.assign({}, m, { valorAtual: m.valorAtual + valor }) : m;
+    });
+    return Object.assign({}, prev, { metas: metas });
+  });
+}
+
+function handleDeleteMeta(metaId) {
+  mutate(function (prev) { return Object.assign({}, prev, { metas: (prev.metas || []).filter(function (m) { return m.id !== metaId; }) }); });
+}
+
+/* ---------------------------- handlers: negociações -------------------------- */
+
+function handleAddNegociacao(vals) {
+  var valorTotal = parseValorBR(vals.valorTotal) || 0;
+  var parcelas = Math.max(1, parseInt(vals.parcelas, 10) || 1);
+  var neg = {
+    id: newId("neg"),
+    nome: vals.nome.trim(),
+    valorTotal: valorTotal,
+    parcelas: parcelas,
+    parcelasPagas: 0,
+    criadoEm: new Date().toISOString(),
+  };
+  mutate(function (prev) { return Object.assign({}, prev, { negociacoes: (prev.negociacoes || []).concat([neg]) }); });
+}
+
+function handleDeleteNegociacao(negId) {
+  mutate(function (prev) { return Object.assign({}, prev, { negociacoes: (prev.negociacoes || []).filter(function (n) { return n.id !== negId; }) }); });
+}
+
+function handlePagarParcelaNegociacao(negId) {
+  mutate(function (prev) {
+    var neg = (prev.negociacoes || []).find(function (n) { return n.id === negId; });
+    if (!neg) return prev;
+    var n = neg.parcelas || 1;
+    var pagas = neg.parcelasPagas || 0;
+    if (pagas >= n) return prev;
+    var valor = negociacaoProximaParcela(neg);
+    var tx = {
+      id: newId("tx"),
+      tipo: "despesa",
+      valor: valor,
+      categoria: "Negociação: " + neg.nome,
+      classificacao: "Não classificado",
+      pagamento: "negociacao",
+      cardId: null,
+      parcelaAtual: pagas + 1,
+      totalParcelas: n,
+      parcelamentoId: null,
+      negociacaoId: neg.id,
+      data: new Date().toISOString(),
+    };
+    var negociacoes = prev.negociacoes.map(function (x) {
+      return x.id === negId ? Object.assign({}, x, { parcelasPagas: pagas + 1 }) : x;
+    });
+    return Object.assign({}, prev, { transactions: prev.transactions.concat([tx]), negociacoes: negociacoes });
+  });
+}
+
+function handleDesfazerParcelaNegociacao(negId) {
+  mutate(function (prev) {
+    var neg = (prev.negociacoes || []).find(function (n) { return n.id === negId; });
+    if (!neg || !neg.parcelasPagas) return prev;
+    var txsDaNeg = prev.transactions
+      .filter(function (t) { return t.negociacaoId === negId; })
+      .sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
+    var ultima = txsDaNeg[0];
+    var transactions = ultima ? prev.transactions.filter(function (t) { return t.id !== ultima.id; }) : prev.transactions;
+    var negociacoes = prev.negociacoes.map(function (x) {
+      return x.id === negId ? Object.assign({}, x, { parcelasPagas: Math.max(0, x.parcelasPagas - 1) }) : x;
+    });
+    return Object.assign({}, prev, { transactions: transactions, negociacoes: negociacoes });
+  });
+}
+
+/* ------------------------------- renderização ------------------------------ */
+
+function cardFormHTML(draftId) {
+  var pfx = "cf-" + draftId + "-";
+  return (
+    '<div class="inline-form">' +
+      '<div class="inline-form-title">Cadastrar cartão</div>' +
+      '<label>Apelido<input id="' + pfx + 'name" placeholder="Ex: Nubank" autofocus></label>' +
+      '<div class="inline-form-row">' +
+        '<label>Fechamento<input id="' + pfx + 'closing" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+        '<label>Vencimento<input id="' + pfx + 'due" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+      '</div>' +
+      '<label>Limite (opcional)<input id="' + pfx + 'limit" placeholder="R$" inputmode="decimal"></label>' +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="cancelDraft" data-draft="' + draftId + '">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="saveCard" data-draft="' + draftId + '">Salvar cartão</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function cardPickerHTML(draftId, cards) {
+  var opts = cards.map(function (c) {
+    return '<button type="button" class="chip" data-action="pickCard" data-draft="' + draftId + '" data-card="' + c.id + '">' + escapeHTML(c.name) + '</button>';
+  }).join("");
+  return (
+    '<div class="picker">' +
+      '<div class="picker-title">Qual cartão?</div>' +
+      '<div class="picker-options">' + opts +
+        '<button type="button" class="chip chip-add" data-action="newCardFrom" data-draft="' + draftId + '">+ Novo cartão</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function needPaymentHTML(draft) {
+  var pergunta = draft.tipo === "receita" ? "Como você recebeu?" : "Como foi pago?";
+  var opts = ["pix", "dinheiro", "debito", "cartao"].map(function (p) {
+    return '<button type="button" class="chip" data-action="pickPayment" data-draft="' + draft.id + '" data-payment="' + p + '">' + PAGAMENTO_LABEL[p] + '</button>';
+  }).join("");
+  return (
+    '<div class="picker">' +
+      '<div class="picker-title">' + pergunta + '</div>' +
+      '<div class="picker-options">' + opts + '</div>' +
+    '</div>'
+  );
+}
+
+function confirmCardHTML(draft, cards, tags) {
+  var card = draft.cardId ? cards.find(function (c) { return c.id === draft.cardId; }) : null;
+  var tipoDespesa = draft.tipo === "despesa";
+  var parcelasHTML = draft.parcelas > 1
+    ? '<div class="confirm-parcelas">Parcelado em ' + draft.parcelas + 'x de ' + formatCurrency(draft.valor / draft.parcelas) + ' — compromete os próximos ' + draft.parcelas + ' meses.</div>'
+    : '';
+  var classHTML = tipoDespesa
+    ? '<div class="class-toggle class-toggle-wrap">' + tags.map(function (tag) {
+        return '<button type="button" class="pill' + (draft.classificacao === tag ? ' pill-active' : '') + '" data-action="toggleClass" data-draft="' + draft.id + '" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+      }).join("") + '</div>'
+    : '';
+  return (
+    '<div class="confirm-card">' +
+      '<div class="confirm-row">' +
+        '<span class="tipo-dot ' + (tipoDespesa ? 'dot-despesa' : 'dot-receita') + '"></span>' +
+        '<span class="confirm-tipo">' + (tipoDespesa ? 'Despesa' : 'Receita') + '</span>' +
+        '<span class="confirm-valor">' + formatCurrency(draft.valor) + '</span>' +
+      '</div>' +
+      '<div class="confirm-meta">' +
+        '<span>' + escapeHTML(draft.categoria) + '</span><span class="dot-sep">·</span>' +
+        '<span>' + (PAGAMENTO_LABEL[draft.pagamento] || draft.pagamento) + (card ? ' (' + escapeHTML(card.name) + ')' : '') + '</span>' +
+      '</div>' +
+      parcelasHTML + classHTML +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="cancelDraft" data-draft="' + draft.id + '">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="confirmDraft" data-draft="' + draft.id + '">Salvar lançamento</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function doneHTML(draft, cards) {
+  if (draft.standalone) return '<div class="done-note">Cartão cadastrado.</div>';
+  var card = draft.cardId ? cards.find(function (c) { return c.id === draft.cardId; }) : null;
+  var classe = draft.tipo === "despesa"
+    ? ' · ' + (draft.classificacao && draft.classificacao !== "Não classificado" ? labelForTag(draft.classificacao) : "Não classificado")
+    : '';
+  return (
+    '<div class="done-note">✅ ' + (draft.tipo === "receita" ? "Receita" : "Despesa") + ' de ' + formatCurrency(draft.valor) +
+    ' em ' + escapeHTML(draft.categoria) + (draft.parcelas > 1 ? ' (' + draft.parcelas + 'x)' : '') +
+    ' · ' + PAGAMENTO_LABEL[draft.pagamento] + (card ? ' · ' + escapeHTML(card.name) : '') + classe +
+    '</div>'
+  );
+}
+
+function draftBubbleHTML(draft, cards, tags) {
+  if (!draft) return '';
+  if (draft.status === "cardForm") return cardFormHTML(draft.id);
+  if (draft.status === "cardPicker") return cardPickerHTML(draft.id, cards);
+  if (draft.status === "needPayment") return needPaymentHTML(draft);
+  if (draft.status === "confirm") return confirmCardHTML(draft, cards, tags);
+  if (draft.status === "done") return doneHTML(draft, cards);
+  if (draft.status === "cancelled") return '<div class="done-note muted">Lançamento cancelado.</div>';
+  return '';
+}
+
+function renderChat() {
+  var scroll = document.getElementById("chatScroll");
+  var tags = ["necessidade", "desejo"].concat(store.classTags || []);
+  scroll.innerHTML = store.messages.map(function (m) {
+    if (m.kind === "text") {
+      var lines = m.text.split("\n").map(function (line) { return '<div>' + escapeHTML(line) + '</div>'; }).join("");
+      return '<div class="msg-row ' + (m.from === "user" ? "row-user" : "row-bot") + '">' +
+        '<div class="bubble ' + (m.from === "user" ? "bubble-user" : "bubble-bot") + '">' + lines + '</div></div>';
+    }
+    if (m.kind === "draft") {
+      return '<div class="msg-row row-bot"><div class="bubble bubble-bot bubble-draft">' +
+        draftBubbleHTML(store.drafts[m.draftId], store.cards, tags) + '</div></div>';
+    }
+    return "";
+  }).join("");
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function renderBalance() {
+  var s = computeSaldoMes(store.transactions);
+  var pct = s.receitas + s.despesas > 0 ? Math.min(100, (s.despesas / (s.receitas + s.despesas)) * 100) : 0;
+  document.getElementById("balanceLabel").textContent = "Saldo de " + MESES[new Date().getMonth()];
+  var valEl = document.getElementById("balanceValue");
+  valEl.textContent = formatCurrency(s.saldo);
+  valEl.className = "balance-value " + (s.saldo < 0 ? "negative" : "positive");
+  document.getElementById("balanceBarFill").style.width = pct + "%";
+  document.getElementById("balanceReceitas").textContent = "Receitas " + formatCurrency(s.receitas);
+  document.getElementById("balanceDespesas").textContent = "Despesas " + formatCurrency(s.despesas);
+}
+
+function renderSummary() {
+  var now = new Date();
+  var list = document.getElementById("summaryCardsList");
+  if (store.cards.length === 0) {
+    list.innerHTML = '<div class="summary-empty">Nenhum cartão cadastrado ainda.</div>';
+    return;
+  }
+  list.innerHTML = store.cards.map(function (c) {
+    var total = store.transactions.filter(function (t) {
+      var d = new Date(t.data);
+      return t.cardId === c.id && t.tipo === "despesa" && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).reduce(function (s, t) { return s + t.valor; }, 0);
+    return '<div class="summary-card-row"><span class="summary-card-name">' + escapeHTML(c.name) + '</span><span class="summary-card-fatura">' + formatCurrency(total) + '</span></div>';
+  }).join("");
+}
+
+function render() {
+  renderBalance();
+  renderSummary();
+  renderChat();
+  renderLancamentos();
+  renderCartao();
+  renderCategorias();
+  renderMetas();
+  renderNegociacoes();
+}
+
+/* ---------------------------- view: lançamentos ----------------------------- */
+
+function filterBarHTML(tags) {
+  var f = uiState.filtros;
+  var tipoBtns = ["todos", "despesa", "receita"].map(function (v) {
+    var label = v === "todos" ? "Todos" : v === "despesa" ? "Despesas" : "Receitas";
+    return '<button type="button" class="chip chip-sm' + (f.tipo === v ? " chip-active" : "") + '" data-action="filtroTipo" data-value="' + v + '">' + label + '</button>';
+  }).join("");
+  var periodoBtn = '<button type="button" class="chip chip-sm' + (f.periodo === "mes" ? " chip-active" : "") + '" data-action="filtroPeriodo">' + (f.periodo === "mes" ? "Este mês" : "Tudo") + '</button>';
+  var classBtns = '<button type="button" class="chip chip-sm' + (f.classificacao === "todos" ? " chip-active" : "") + '" data-action="filtroClass" data-value="todos">Todas</button>' +
+    tags.map(function (tag) {
+      return '<button type="button" class="chip chip-sm' + (f.classificacao === tag ? " chip-active" : "") + '" data-action="filtroClass" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+    }).join("");
+  var select = "";
+  if (store.cards.length > 0) {
+    select = '<select class="filter-select" id="filtroPagamentoSelect">' +
+      '<option value="todos"' + (f.pagamento === "todos" ? " selected" : "") + '>Todas as formas</option>' +
+      '<option value="pix"' + (f.pagamento === "pix" ? " selected" : "") + '>Pix</option>' +
+      '<option value="dinheiro"' + (f.pagamento === "dinheiro" ? " selected" : "") + '>Dinheiro</option>' +
+      store.cards.map(function (c) {
+        return '<option value="card:' + c.id + '"' + (f.pagamento === "card:" + c.id ? " selected" : "") + '>' + escapeHTML(c.name) + '</option>';
+      }).join("") +
+      '</select>';
+  }
+  return '<div class="filter-bar"><div class="filter-row">' + tipoBtns + periodoBtn + '</div><div class="filter-row">' + classBtns + '</div>' + select + '</div>';
+}
+
+function lancRowHTML(t, tags) {
+  if (uiState.editingTxId === t.id) {
+    var pills = t.tipo === "despesa"
+      ? '<div class="class-toggle class-toggle-wrap">' + tags.map(function (tag) {
+          return '<button type="button" class="pill' + (uiState.editClass === tag ? " pill-active" : "") + '" data-action="editTogglePill" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+        }).join("") + '</div>'
+      : '';
+    return (
+      '<div class="lanc-row lanc-row-editing"><div class="inline-form">' +
+        '<label>Categoria<input id="editCategoriaInput" value="' + escapeHTML(t.categoria) + '" autofocus placeholder="Categoria"></label>' +
+        '<label>Data<input type="date" id="editDataInput" value="' + new Date(t.data).toISOString().slice(0, 10) + '"></label>' +
+        pills +
+        '<div class="inline-form-actions">' +
+          '<button type="button" class="btn-ghost" data-action="cancelEditTx">Cancelar</button>' +
+          '<button type="button" class="btn-primary" data-action="saveEditTx" data-id="' + t.id + '">Salvar</button>' +
+        '</div>' +
+      '</div></div>'
+    );
+  }
+  var card = t.cardId ? store.cards.find(function (c) { return c.id === t.cardId; }) : null;
+  var confirming = uiState.deletingTxId === t.id;
+  var meta = (PAGAMENTO_LABEL[t.pagamento] || t.pagamento) +
+    (card ? " · " + escapeHTML(card.name) : "") +
+    (t.tipo === "despesa" && t.classificacao !== "Não classificado" ? " · " + labelForTag(t.classificacao) : "");
+  var actionsHTML = confirming
+    ? '<div class="lanc-delete-confirm">' +
+        '<button type="button" class="btn-ghost btn-xs" data-action="cancelDeleteTx">Cancelar</button>' +
+        '<button type="button" class="btn-danger btn-xs" data-action="confirmDeleteTx" data-id="' + t.id + '">Excluir</button>' +
+      '</div>'
+    : '<div class="lanc-row-actions">' +
+        '<button type="button" class="lanc-delete-btn" aria-label="Editar" data-action="startEditTx" data-id="' + t.id + '"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg></button>' +
+        '<button type="button" class="lanc-delete-btn" aria-label="Excluir" data-action="askDeleteTx" data-id="' + t.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>' +
+      '</div>';
+  return (
+    '<div class="lanc-row">' +
+      '<div class="lanc-row-main">' +
+        '<span class="tipo-dot ' + (t.tipo === "despesa" ? "dot-despesa" : "dot-receita") + '"></span>' +
+        '<div class="lanc-row-info">' +
+          '<div class="lanc-row-cat">' + escapeHTML(t.categoria) + (t.totalParcelas ? " · " + t.parcelaAtual + "/" + t.totalParcelas : "") + '</div>' +
+          '<div class="lanc-row-meta">' + meta + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="lanc-row-right">' +
+        '<span class="lanc-valor ' + (t.tipo === "despesa" ? "valor-despesa" : "valor-receita") + '">' + (t.tipo === "despesa" ? "- " : "+ ") + formatCurrency(t.valor) + '</span>' +
+        actionsHTML +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderLancamentos() {
+  var now = new Date();
+  var tags = ["necessidade", "desejo"].concat(store.classTags || []);
+  var filtered = store.transactions.filter(function (t) { return passesFilter(t, uiState.filtros, now); });
+  var sorted = filtered.slice().sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
+  var totalReceitas = filtered.filter(function (t) { return t.tipo === "receita"; }).reduce(function (s, t) { return s + t.valor; }, 0);
+  var totalDespesas = filtered.filter(function (t) { return t.tipo === "despesa"; }).reduce(function (s, t) { return s + t.valor; }, 0);
+
+  var groups = [];
+  var lastKey = null;
+  sorted.forEach(function (t) {
+    var d = new Date(t.data);
+    var key = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined });
+    if (key !== lastKey) { groups.push({ key: key, items: [] }); lastKey = key; }
+    groups[groups.length - 1].items.push(t);
+  });
+
+  var html = filterBarHTML(tags);
+  html += '<div class="lanc-totals"><span class="lanc-total-receita">Receitas ' + formatCurrency(totalReceitas) + '</span><span class="lanc-total-despesa">Despesas ' + formatCurrency(totalDespesas) + '</span></div>';
+  html += '<div class="lanc-list">';
+  if (sorted.length === 0) html += '<div class="lanc-empty">Nenhum lançamento encontrado com esses filtros.</div>';
+  groups.forEach(function (g) {
+    html += '<div><div class="lanc-date-head">' + escapeHTML(g.key) + '</div>';
+    g.items.forEach(function (t) { html += lancRowHTML(t, tags); });
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById("lancView").innerHTML = html;
+}
+
+/* ------------------------------- view: cartão -------------------------------- */
+
+function cartaoCardFormHTML() {
+  return (
+    '<div class="inline-form">' +
+      '<div class="inline-form-title">Cadastrar cartão</div>' +
+      '<label>Apelido<input id="ccf-name" placeholder="Ex: Nubank" autofocus></label>' +
+      '<div class="inline-form-row">' +
+        '<label>Fechamento<input id="ccf-closing" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+        '<label>Vencimento<input id="ccf-due" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+      '</div>' +
+      '<label>Limite (opcional)<input id="ccf-limit" placeholder="R$" inputmode="decimal"></label>' +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="cartaoCancelCard">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="cartaoSaveCard">Salvar cartão</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function cartaoTxRowHTML(t, futura) {
+  var sub = futura ? MESES[new Date(t.data).getMonth()] : new Date(t.data).toLocaleDateString("pt-BR");
+  var parcelaInfo = futura ? " · " + t.parcelaAtual + "/" + t.totalParcelas : (t.totalParcelas ? " · " + t.parcelaAtual + "/" + t.totalParcelas : "");
+  return (
+    '<div class="lanc-row"><div class="lanc-row-main"><span class="tipo-dot dot-despesa"></span>' +
+      '<div class="lanc-row-info"><div class="lanc-row-cat">' + escapeHTML(t.categoria) + parcelaInfo + '</div>' +
+      '<div class="lanc-row-meta">' + sub + '</div></div></div>' +
+      '<span class="lanc-valor valor-despesa">- ' + formatCurrency(t.valor) + '</span></div>'
+  );
+}
+
+function renderCartao() {
+  var container = document.getElementById("cartaoView");
+  var cards = store.cards;
+  var now = new Date();
+
+  if (cards.length === 0 && !uiState.addingCard) {
+    container.className = "cartao-view cartao-empty";
+    container.innerHTML =
+      '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>' +
+      '<p>Nenhum cartão cadastrado ainda.</p>' +
+      '<button type="button" class="btn-primary" data-action="addCardStart">Cadastrar cartão</button>';
+    return;
+  }
+
+  if (uiState.addingCard) {
+    container.className = "cartao-view";
+    container.innerHTML = cartaoCardFormHTML();
+    return;
+  }
+
+  container.className = "cartao-view";
+  var card = cards.find(function (c) { return c.id === uiState.selectedCardId; }) || cards[0];
+  var mesAno = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var pagaRecord = (store.faturasPagas || []).find(function (f) { return f.cardId === card.id && f.mesAno === mesAno; });
+  var faturaTxs = store.transactions
+    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && sameMonth(t.data, now); })
+    .sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
+  var faturaAtual = faturaTxs.reduce(function (s, t) { return s + t.valor; }, 0);
+  var futuras = store.transactions
+    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.totalParcelas && !sameMonth(t.data, now); })
+    .sort(function (a, b) { return new Date(a.data) - new Date(b.data); });
+  var compromissoFuturo = futuras.reduce(function (s, t) { return s + t.valor; }, 0);
+  var diasAtraso = diasAtrasoFatura(card, faturaAtual, pagaRecord, now);
+
+  var cardsComAtraso = {};
+  cards.forEach(function (c) {
+    var rec = (store.faturasPagas || []).find(function (f) { return f.cardId === c.id && f.mesAno === mesAno; });
+    var valor = store.transactions
+      .filter(function (t) { return t.cardId === c.id && t.tipo === "despesa" && sameMonth(t.data, now); })
+      .reduce(function (s, t) { return s + t.valor; }, 0);
+    if (diasAtrasoFatura(c, valor, rec, now) > 0) cardsComAtraso[c.id] = true;
+  });
+
+  var switchHTML = '<div class="cartao-switch">' +
+    cards.map(function (c) {
+      return '<button type="button" class="chip chip-sm' + (c.id === card.id ? " chip-active" : "") + '" data-action="selectCard" data-card="' + c.id + '">' +
+        escapeHTML(c.name) + (cardsComAtraso[c.id] ? '<span class="atraso-dot" aria-label="Fatura atrasada"></span>' : '') + '</button>';
+    }).join("") +
+    '<button type="button" class="chip chip-sm chip-add" data-action="addCardStart">+ Novo</button></div>';
+
+  var statusHTML;
+  if (faturaAtual <= 0) {
+    statusHTML = "";
+  } else if (pagaRecord) {
+    statusHTML = '<div class="fatura-status fatura-status-paga">Paga em ' + new Date(pagaRecord.pagoEm).toLocaleDateString("pt-BR") +
+      ' <button type="button" class="link-btn" data-action="unmarkFaturaPaga" data-id="' + pagaRecord.id + '">Desfazer</button></div>';
+  } else {
+    statusHTML = (diasAtraso > 0
+      ? '<div class="fatura-status fatura-status-atrasada"><span class="atraso-dot"></span> Atrasada há ' + diasAtraso + (diasAtraso === 1 ? " dia" : " dias") + '</div>'
+      : '') +
+      '<button type="button" class="btn-primary btn-sm cartao-pagar-btn" data-action="markFaturaPaga" data-card="' + card.id + '" data-mesano="' + mesAno + '">Marcar fatura como paga</button>';
+  }
+
+  var heroHTML = '<div class="cartao-hero">' +
+    '<div class="cartao-hero-name">' + escapeHTML(card.name) + '</div>' +
+    '<div class="cartao-hero-fatura">' + formatCurrency(faturaAtual) + '</div>' +
+    '<div class="cartao-hero-sub">Fatura de ' + MESES[now.getMonth()] + '</div>' +
+    '<div class="cartao-hero-dates">' + (card.closingDay ? "Fecha dia " + card.closingDay : "Fechamento não informado") + (card.dueDay ? " · Vence dia " + card.dueDay : "") + '</div>' +
+    (card.limit ? '<div class="cartao-hero-limit">Limite: ' + formatCurrency(card.limit) + '</div>' : '') +
+    statusHTML +
+    '</div>';
+
+  var compromissoHTML = compromissoFuturo > 0
+    ? '<div class="cartao-compromisso">Você já tem ' + formatCurrency(compromissoFuturo) + ' comprometidos em parcelas dos próximos meses neste cartão.</div>'
+    : '';
+
+  var listAtualHTML = '<div class="cartao-section-title">Nesta fatura</div><div class="cartao-tx-list">' +
+    (faturaTxs.length === 0 ? '<div class="lanc-empty">Nenhum gasto neste cartão este mês.</div>' : faturaTxs.map(function (t) { return cartaoTxRowHTML(t, false); }).join("")) +
+    '</div>';
+
+  var listFuturaHTML = futuras.length > 0
+    ? '<div class="cartao-section-title">Parcelas futuras</div><div class="cartao-tx-list">' + futuras.map(function (t) { return cartaoTxRowHTML(t, true); }).join("") + '</div>'
+    : '';
+
+  var dangerHTML = '<div class="cartao-danger">' +
+    (uiState.deletingCardId === card.id
+      ? '<div class="lanc-delete-confirm"><span class="cartao-danger-label">Excluir ' + escapeHTML(card.name) + '?</span>' +
+        '<button type="button" class="btn-ghost btn-xs" data-action="deleteCardCancel">Cancelar</button>' +
+        '<button type="button" class="btn-danger btn-xs" data-action="deleteCardConfirm" data-card="' + card.id + '">Excluir</button></div>'
+      : '<button type="button" class="btn-ghost btn-sm" data-action="deleteCardAsk" data-card="' + card.id + '">Excluir cartão</button>') +
+    '</div>';
+
+  container.innerHTML = switchHTML + heroHTML + compromissoHTML + listAtualHTML + listFuturaHTML + dangerHTML;
+}
+
+/* ------------------------------- view: categorias ---------------------------- */
+
+var CAT_PALETTE = ["#7D5BA6", "#3D7EA6", "#A65D57", "#5C8A3A", "#B36B00", "#4A6FA5"];
+
+function catColorFor(key, customIndex) {
+  if (key === "necessidade") return "var(--teal)";
+  if (key === "desejo") return "var(--gold)";
+  if (key === "Não classificado") return "var(--paper-line)";
+  return CAT_PALETTE[customIndex % CAT_PALETTE.length];
+}
+function catSortKey(k) {
+  if (k === "necessidade") return "0";
+  if (k === "desejo") return "1";
+  if (k === "Não classificado") return "zzz";
+  return "2" + k;
+}
+
+function renderCategorias() {
+  var now = new Date();
+  var periodo = uiState.periodoCategorias;
+  var despesas = store.transactions.filter(function (t) {
+    return t.tipo === "despesa" && (periodo === "todos" || sameMonth(t.data, now));
+  });
+  var total = despesas.reduce(function (s, t) { return s + t.valor; }, 0);
+
+  var byClass = {};
+  despesas.forEach(function (t) {
+    var k = t.classificacao || "Não classificado";
+    byClass[k] = (byClass[k] || 0) + t.valor;
+  });
+  var classEntries = Object.keys(byClass)
+    .map(function (k) { return [k, byClass[k]]; })
+    .sort(function (a, b) { return catSortKey(a[0]).localeCompare(catSortKey(b[0])); });
+  var customIdx = 0;
+  var classSegments = classEntries.map(function (entry) {
+    var key = entry[0], valor = entry[1];
+    var isCustom = key !== "necessidade" && key !== "desejo" && key !== "Não classificado";
+    var color = catColorFor(key, isCustom ? customIdx : 0);
+    if (isCustom) customIdx += 1;
+    return { key: key, valor: valor, color: color, pct: total > 0 ? (valor / total) * 100 : 0 };
+  });
+  var pctDesejo = total > 0 ? ((byClass.desejo || 0) / total) * 100 : 0;
+
+  var acc = 0;
+  var gradientParts = classSegments.map(function (s) {
+    var start = acc;
+    acc += s.pct;
+    return s.color + " " + start + "% " + acc + "%";
+  });
+  var donutStyle = total > 0 ? "background: conic-gradient(" + gradientParts.join(", ") + ")" : "background: var(--paper-line)";
+
+  var byCat = {};
+  despesas.forEach(function (t) { byCat[t.categoria] = (byCat[t.categoria] || 0) + t.valor; });
+  var catList = Object.keys(byCat).map(function (k) { return [k, byCat[k]]; }).sort(function (a, b) { return b[1] - a[1]; });
+  var maxCat = catList.length ? catList[0][1] : 0;
+  var customTags = store.classTags || [];
+
+  var html = '<div class="filter-row cat-filter-row">' +
+    '<button type="button" class="chip chip-sm' + (periodo === "mes" ? " chip-active" : "") + '" data-action="catPeriodo" data-value="mes">Este mês</button>' +
+    '<button type="button" class="chip chip-sm' + (periodo === "todos" ? " chip-active" : "") + '" data-action="catPeriodo" data-value="todos">Tudo</button>' +
+    '</div>';
+
+  if (total === 0) {
+    html += '<div class="lanc-empty">Nenhuma despesa ' + (periodo === "mes" ? "este mês" : "registrada") + ' ainda.</div>';
+  } else {
+    html += '<div class="cat-donut-wrap"><div class="cat-donut" style="' + donutStyle + '">' +
+      '<div class="cat-donut-hole"><div class="cat-donut-total">' + formatCurrency(total) + '</div><div class="cat-donut-sub">despesas</div></div>' +
+      '</div><div class="cat-legend">' +
+      classSegments.map(function (s) {
+        return '<div class="cat-legend-row"><span class="cat-dot" style="background:' + s.color + '"></span> ' + labelForTag(s.key) +
+          '<span class="cat-legend-val">' + formatCurrency(s.valor) + ' · ' + s.pct.toFixed(0) + '%</span></div>';
+      }).join("") +
+      '</div></div>';
+
+    if (pctDesejo >= 40) {
+      html += '<div class="cartao-compromisso">Boa parte do seu orçamento está em desejos (' + pctDesejo.toFixed(0) + '%). Vale revisar se dá pra equilibrar mais com necessidades e poupança.</div>';
+    }
+
+    html += '<div class="cartao-section-title">Por categoria</div><div class="cat-bar-list">' +
+      catList.map(function (entry) {
+        var cat = entry[0], valor = entry[1];
+        var pct = maxCat > 0 ? (valor / maxCat) * 100 : 0;
+        return '<div class="cat-bar-row"><div class="cat-bar-head"><span>' + escapeHTML(cat) + '</span><span class="cat-bar-val">' + formatCurrency(valor) + '</span></div>' +
+          '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%"></div></div></div>';
+      }).join("") +
+      '</div>';
+  }
+
+  html += '<div class="cartao-section-title">Classificações</div><div class="cat-tags-manage">' +
+    '<div class="cat-tags-list">' +
+    '<span class="chip chip-sm cat-tag-fixed">Necessidade</span><span class="chip chip-sm cat-tag-fixed">Desejo</span>' +
+    customTags.map(function (tag) {
+      return '<span class="chip chip-sm cat-tag-removable">' + escapeHTML(tag) +
+        '<button type="button" aria-label="Remover ' + escapeHTML(tag) + '" data-action="removeTag" data-value="' + escapeHTML(tag) + '">' +
+        '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>';
+    }).join("") +
+    '</div><div class="cat-tags-add">' +
+    '<input id="novaTagInput" placeholder="Nova classificação, ex: Investimento">' +
+    '<button type="button" class="btn-ghost btn-sm" id="btnAddTag">' +
+    '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Adicionar</button>' +
+    '</div></div>';
+
+  document.getElementById("catView").innerHTML = html;
+}
+
+/* --------------------------------- view: metas -------------------------------- */
+
+function metaFormHTML(defaultReserva) {
+  return (
+    '<div class="inline-form">' +
+      '<div class="inline-form-title">' + (defaultReserva ? "Criar reserva de emergência" : "Nova meta") + '</div>' +
+      '<label>Nome<input id="mf-nome" value="' + (defaultReserva ? "Reserva de emergência" : "") + '" placeholder="Ex: Viagem, Reserva de emergência"' + (defaultReserva ? "" : " autofocus") + '></label>' +
+      '<label>Valor alvo<input id="mf-valor" placeholder="R$" inputmode="decimal"></label>' +
+      '<label>Prazo (opcional)<input type="month" id="mf-prazo"></label>' +
+      (defaultReserva ? "" : '<label class="inline-form-checkbox"><input type="checkbox" id="mf-reserva"> Marcar como reserva de emergência</label>') +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="metaCancel">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="metaSave" data-reserva="' + (defaultReserva ? "1" : "0") + '">Salvar meta</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function metaCardHTML(m) {
+  var pct = m.valorAlvo > 0 ? Math.min(100, (m.valorAtual / m.valorAlvo) * 100) : 0;
+  var isReserva = m.tipo === "reserva";
+  var confirming = uiState.deletingMetaId === m.id;
+  var aporting = uiState.aportingId === m.id;
+  var nomeHTML = (isReserva ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><polyline points="9 12 11 14 15 10"/></svg> ' : '') + escapeHTML(m.nome);
+  var headRight = confirming
+    ? '<div class="lanc-delete-confirm"><button type="button" class="btn-ghost btn-xs" data-action="metaDeleteCancel">Cancelar</button><button type="button" class="btn-danger btn-xs" data-action="metaDeleteConfirm" data-id="' + m.id + '">Excluir</button></div>'
+    : '<button type="button" class="lanc-delete-btn" aria-label="Excluir meta" data-action="metaDeleteAsk" data-id="' + m.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
+  var prazoStr = m.prazo ? " · prazo " + new Date(m.prazo + "-01").toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) : "";
+  var aporteHTML = aporting
+    ? '<div class="inline-form-row meta-aporte-row"><input id="aporteInput-' + m.id + '" value="' + escapeHTML(uiState.aporteValor) + '" placeholder="R$" inputmode="decimal" autofocus>' +
+      '<button type="button" class="btn-ghost btn-xs" data-action="aporteCancel">Cancelar</button>' +
+      '<button type="button" class="btn-primary btn-xs" data-action="aporteSave" data-id="' + m.id + '">Adicionar</button></div>'
+    : '<button type="button" class="btn-ghost btn-sm meta-aportar-btn" data-action="aporteStart" data-id="' + m.id + '">' +
+      '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Aportar</button>';
+
+  return (
+    '<div class="meta-card">' +
+      '<div class="meta-card-head"><span class="meta-card-name">' + nomeHTML + '</span>' + headRight + '</div>' +
+      '<div class="meta-card-values">' + formatCurrency(m.valorAtual) + '<span class="meta-card-target"> de ' + formatCurrency(m.valorAlvo) + '</span></div>' +
+      '<div class="balance-bar"><div class="balance-bar-fill' + (isReserva ? " fill-gold" : " fill-teal") + '" style="width:' + pct + '%"></div></div>' +
+      '<div class="meta-card-sub">' + pct.toFixed(0) + '% concluído' + prazoStr + '</div>' +
+      aporteHTML +
+    '</div>'
+  );
+}
+
+function renderMetas() {
+  var container = document.getElementById("metasView");
+  var metas = store.metas || [];
+
+  if (uiState.addingMeta) {
+    container.innerHTML = metaFormHTML(uiState.addingMeta === "reserva");
+    return;
+  }
+
+  var html = "";
+  if (metas.length === 0) {
+    html += '<div class="cartao-empty">' +
+      '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5c-1.5-1.5-3-2-5.5-2A6.5 6.5 0 0 0 7 9.5c0 3 1.5 4.5 3 6l.5 5.5h4L15 17c2-1 4-3 4-6"/><circle cx="16" cy="8" r="1"/></svg>' +
+      '<p>Nenhuma meta cadastrada ainda.</p>' +
+      '<div class="metas-empty-actions">' +
+      '<button type="button" class="btn-primary btn-sm" data-action="metaAddStart" data-value="reserva"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><polyline points="9 12 11 14 15 10"/></svg> Reserva de emergência</button>' +
+      '<button type="button" class="btn-ghost btn-sm" data-action="metaAddStart" data-value="1"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Outra meta</button>' +
+      '</div></div>';
+  } else {
+    html += '<div class="metas-add-row"><button type="button" class="btn-ghost btn-sm" data-action="metaAddStart" data-value="1">' +
+      '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova meta</button></div>';
+  }
+
+  var hasReserva = metas.some(function (m) { return m.tipo === "reserva"; });
+  var suggested = computeSuggestedReserve(store.transactions);
+  if (!hasReserva && suggested) {
+    html += '<div class="cartao-compromisso">Com base no seu histórico, uma reserva de emergência de 6 meses de despesas ficaria em torno de ' + formatCurrency(suggested) + '. ' +
+      '<button type="button" class="link-btn" data-action="metaAddStart" data-value="reserva">Criar reserva</button></div>';
+  }
+
+  html += '<div class="metas-list">' + metas.map(metaCardHTML).join("") + '</div>';
+  container.innerHTML = html;
+}
+
+/* ----------------------------- view: negociações ------------------------------ */
+
+function negFormHTML() {
+  return (
+    '<div class="inline-form">' +
+      '<div class="inline-form-title">Nova negociação</div>' +
+      '<label>Nome / credor<input id="nf-nome" placeholder="Ex: Negociação Nubank" autofocus></label>' +
+      '<label>Valor total negociado<input id="nf-valor" placeholder="R$" inputmode="decimal"></label>' +
+      '<label>Nº de parcelas<input id="nf-parcelas" placeholder="Ex: 6" inputmode="numeric" maxlength="2"></label>' +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="negCancel">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="negSave">Salvar negociação</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function negCardHTML(neg) {
+  var n = neg.parcelas || 1;
+  var pagas = Math.min(neg.parcelasPagas || 0, n);
+  var saldo = negociacaoSaldoDevedor(neg);
+  var quitada = pagas >= n;
+  var proxima = negociacaoProximaParcela(neg);
+  var pct = n > 0 ? Math.min(100, (pagas / n) * 100) : 0;
+  var confirming = uiState.deletingNegId === neg.id;
+  var headRight = confirming
+    ? '<div class="lanc-delete-confirm"><button type="button" class="btn-ghost btn-xs" data-action="negDeleteCancel">Cancelar</button><button type="button" class="btn-danger btn-xs" data-action="negDeleteConfirm" data-id="' + neg.id + '">Excluir</button></div>'
+    : '<button type="button" class="lanc-delete-btn" aria-label="Excluir negociação" data-action="negDeleteAsk" data-id="' + neg.id + '"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>';
+  var actionHTML = quitada
+    ? '<div class="fatura-status fatura-status-paga"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><polyline points="9 12 11 14 15 10"/></svg> Negociação quitada</div>'
+    : '<div class="meta-aporte-row"><button type="button" class="btn-primary btn-sm meta-aportar-btn" data-action="negPagarParcela" data-id="' + neg.id + '">Pagar parcela de ' + formatCurrency(proxima) + '</button>' +
+      (pagas > 0 ? '<button type="button" class="link-btn" data-action="negDesfazer" data-id="' + neg.id + '">Desfazer última</button>' : '') +
+      '</div>';
+
+  return (
+    '<div class="meta-card">' +
+      '<div class="meta-card-head"><span class="meta-card-name"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="4" y1="10" x2="20" y2="10"/><polygon points="12 3 20 10 4 10 12 3"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/></svg> ' + escapeHTML(neg.nome) + '</span>' + headRight + '</div>' +
+      '<div class="meta-card-values">' + formatCurrency(saldo) + '<span class="meta-card-target"> restantes de ' + formatCurrency(neg.valorTotal) + '</span></div>' +
+      '<div class="balance-bar"><div class="balance-bar-fill fill-teal" style="width:' + pct + '%"></div></div>' +
+      '<div class="meta-card-sub">' + pagas + '/' + n + ' parcelas pagas</div>' +
+      actionHTML +
+    '</div>'
+  );
+}
+
+function renderNegociacoes() {
+  var container = document.getElementById("negView");
+  var negociacoes = store.negociacoes || [];
+
+  if (uiState.addingNeg) {
+    container.innerHTML = negFormHTML();
+    return;
+  }
+
+  var html = "";
+  if (negociacoes.length === 0) {
+    html += '<div class="cartao-empty"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="4" y1="10" x2="20" y2="10"/><polygon points="12 3 20 10 4 10 12 3"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/></svg>' +
+      '<p>Nenhuma negociação cadastrada ainda.</p>' +
+      '<button type="button" class="btn-primary btn-sm" data-action="negAddStart"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova negociação</button></div>';
+  } else {
+    html += '<div class="metas-add-row"><button type="button" class="btn-ghost btn-sm" data-action="negAddStart"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova negociação</button></div>';
+  }
+
+  html += '<div class="metas-list">' + negociacoes.map(negCardHTML).join("") + '</div>';
+  container.innerHTML = html;
+}
+
+/* --------------------------------- eventos --------------------------------- */
+
+document.getElementById("btnSend").addEventListener("click", handleSubmit);
+document.getElementById("chatInput").addEventListener("keydown", function (e) {
+  if (e.key === "Enter") handleSubmit();
+});
+document.getElementById("btnSummary").addEventListener("click", function () {
+  var panel = document.getElementById("summaryPanel");
+  panel.hidden = !panel.hidden;
+});
+document.getElementById("btnExportData").addEventListener("click", handleExportData);
+document.getElementById("btnImportData").addEventListener("click", function () {
+  document.getElementById("importFileInput").click();
+});
+document.getElementById("importFileInput").addEventListener("change", function (e) {
+  var file = e.target.files && e.target.files[0];
+  handleImportFile(file);
+  e.target.value = "";
+});
+
+document.querySelectorAll(".tab-btn").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("tab-active"); });
+    btn.classList.add("tab-active");
+    document.querySelectorAll(".view").forEach(function (v) { v.hidden = true; });
+    document.getElementById("view-" + btn.dataset.tab).hidden = false;
+  });
+});
+
+document.getElementById("chatScroll").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  var draftId = el.dataset.draft;
+  if (action === "pickPayment") draftActions.pickPayment(draftId, el.dataset.payment);
+  else if (action === "pickCard") draftActions.pickCard(draftId, el.dataset.card);
+  else if (action === "newCardFrom") draftActions.newCardFrom(draftId);
+  else if (action === "toggleClass") draftActions.toggleClass(draftId, el.dataset.value);
+  else if (action === "cancelDraft") draftActions.cancel(draftId);
+  else if (action === "confirmDraft") draftActions.confirm(draftId);
+  else if (action === "saveCard") {
+    var pfx = "cf-" + draftId + "-";
+    var vals = {
+      name: document.getElementById(pfx + "name").value,
+      closingDay: document.getElementById(pfx + "closing").value,
+      dueDay: document.getElementById(pfx + "due").value,
+      limit: document.getElementById(pfx + "limit").value,
+    };
+    if (!vals.name.trim()) return;
+    draftActions.registerCard(draftId, vals);
+  }
+});
+
+/* -------- lançamentos -------- */
+
+document.getElementById("lancView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  var id = el.dataset.id;
+  if (action === "filtroTipo") { uiState.filtros.tipo = el.dataset.value; render(); }
+  else if (action === "filtroPeriodo") { uiState.filtros.periodo = uiState.filtros.periodo === "mes" ? "todos" : "mes"; render(); }
+  else if (action === "filtroClass") { uiState.filtros.classificacao = el.dataset.value; render(); }
+  else if (action === "startEditTx") {
+    var t = store.transactions.find(function (x) { return x.id === id; });
+    if (!t) return;
+    var tags = ["necessidade", "desejo"].concat(store.classTags || []);
+    uiState.editingTxId = id;
+    uiState.editClass = tags.indexOf(t.classificacao) !== -1 ? t.classificacao : null;
+    render();
+  }
+  else if (action === "cancelEditTx") { uiState.editingTxId = null; render(); }
+  else if (action === "editTogglePill") {
+    uiState.editClass = uiState.editClass === el.dataset.value ? null : el.dataset.value;
+    render();
+  }
+  else if (action === "saveEditTx") {
+    var t2 = store.transactions.find(function (x) { return x.id === id; });
+    if (!t2) return;
+    var catInput = document.getElementById("editCategoriaInput");
+    var dataInput = document.getElementById("editDataInput");
+    var categoriaVal = catInput.value.trim();
+    var categoria = categoriaVal ? categoriaVal.charAt(0).toUpperCase() + categoriaVal.slice(1) : t2.categoria;
+    var data = t2.data;
+    if (dataInput.value) {
+      var d = new Date(dataInput.value + "T12:00:00");
+      if (!isNaN(d)) data = d.toISOString();
+    }
+    uiState.editingTxId = null;
+    handleEditTransaction(id, {
+      categoria: categoria,
+      classificacao: t2.tipo === "despesa" ? (uiState.editClass || "Não classificado") : t2.classificacao,
+      data: data,
+    });
+  }
+  else if (action === "askDeleteTx") { uiState.deletingTxId = id; render(); }
+  else if (action === "cancelDeleteTx") { uiState.deletingTxId = null; render(); }
+  else if (action === "confirmDeleteTx") { uiState.deletingTxId = null; handleDeleteTransaction(id); }
+});
+
+document.getElementById("lancView").addEventListener("change", function (e) {
+  if (e.target && e.target.id === "filtroPagamentoSelect") {
+    uiState.filtros.pagamento = e.target.value;
+    render();
+  }
+});
+
+/* -------- cartão -------- */
+
+document.getElementById("cartaoView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  if (action === "addCardStart") { uiState.addingCard = true; render(); }
+  else if (action === "cartaoCancelCard") { uiState.addingCard = false; render(); }
+  else if (action === "cartaoSaveCard") {
+    var vals = {
+      name: document.getElementById("ccf-name").value,
+      closingDay: document.getElementById("ccf-closing").value,
+      dueDay: document.getElementById("ccf-due").value,
+      limit: document.getElementById("ccf-limit").value,
+    };
+    if (!vals.name.trim()) return;
+    uiState.addingCard = false;
+    handleRegisterCardDirect(vals);
+  }
+  else if (action === "selectCard") { uiState.selectedCardId = el.dataset.card; render(); }
+  else if (action === "unmarkFaturaPaga") handleUnmarkFaturaPaga(el.dataset.id);
+  else if (action === "markFaturaPaga") handleMarkFaturaPaga(el.dataset.card, el.dataset.mesano);
+  else if (action === "deleteCardAsk") { uiState.deletingCardId = el.dataset.card; render(); }
+  else if (action === "deleteCardCancel") { uiState.deletingCardId = null; render(); }
+  else if (action === "deleteCardConfirm") { uiState.deletingCardId = null; handleDeleteCard(el.dataset.card); }
+});
+
+/* -------- categorias -------- */
+
+document.getElementById("catView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (el) {
+    var action = el.dataset.action;
+    if (action === "catPeriodo") { uiState.periodoCategorias = el.dataset.value; render(); }
+    else if (action === "removeTag") handleRemoveClassTag(el.dataset.value);
+  }
+  if (e.target && e.target.id === "btnAddTag") {
+    var input = document.getElementById("novaTagInput");
+    var val = input.value.trim();
+    if (val) handleAddClassTag(val);
+  }
+});
+document.getElementById("catView").addEventListener("keydown", function (e) {
+  if (e.target && e.target.id === "novaTagInput" && e.key === "Enter") {
+    var val = e.target.value.trim();
+    if (val) handleAddClassTag(val);
+  }
+});
+
+/* -------- metas -------- */
+
+document.getElementById("metasView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  var id = el.dataset.id;
+  if (action === "metaAddStart") { uiState.addingMeta = el.dataset.value === "reserva" ? "reserva" : true; render(); }
+  else if (action === "metaCancel") { uiState.addingMeta = false; render(); }
+  else if (action === "metaSave") {
+    var vals = {
+      nome: document.getElementById("mf-nome").value,
+      valorAlvo: document.getElementById("mf-valor").value,
+      prazo: document.getElementById("mf-prazo").value,
+      tipo: uiState.addingMeta === "reserva" ? "reserva" : (document.getElementById("mf-reserva") && document.getElementById("mf-reserva").checked ? "reserva" : "normal"),
+    };
+    if (!vals.nome.trim() || !vals.valorAlvo) return;
+    uiState.addingMeta = false;
+    handleAddMeta(vals);
+  }
+  else if (action === "metaDeleteAsk") { uiState.deletingMetaId = id; render(); }
+  else if (action === "metaDeleteCancel") { uiState.deletingMetaId = null; render(); }
+  else if (action === "metaDeleteConfirm") { uiState.deletingMetaId = null; handleDeleteMeta(id); }
+  else if (action === "aporteStart") { uiState.aportingId = id; uiState.aporteValor = ""; render(); }
+  else if (action === "aporteCancel") { uiState.aportingId = null; uiState.aporteValor = ""; render(); }
+  else if (action === "aporteSave") {
+    var input = document.getElementById("aporteInput-" + id);
+    var valor = input ? input.value : uiState.aporteValor;
+    if (!valor) return;
+    uiState.aportingId = null;
+    uiState.aporteValor = "";
+    handleAportar(id, valor);
+  }
+});
+document.getElementById("metasView").addEventListener("input", function (e) {
+  if (e.target && e.target.id && e.target.id.indexOf("aporteInput-") === 0) {
+    uiState.aporteValor = e.target.value.replace(/[^\d.,]/g, "");
+  }
+});
+
+/* -------- negociações -------- */
+
+document.getElementById("negView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  var id = el.dataset.id;
+  if (action === "negAddStart") { uiState.addingNeg = true; render(); }
+  else if (action === "negCancel") { uiState.addingNeg = false; render(); }
+  else if (action === "negSave") {
+    var vals = {
+      nome: document.getElementById("nf-nome").value,
+      valorTotal: document.getElementById("nf-valor").value,
+      parcelas: document.getElementById("nf-parcelas").value,
+    };
+    if (!vals.nome.trim() || !vals.valorTotal || !vals.parcelas) return;
+    uiState.addingNeg = false;
+    handleAddNegociacao(vals);
+  }
+  else if (action === "negDeleteAsk") { uiState.deletingNegId = id; render(); }
+  else if (action === "negDeleteCancel") { uiState.deletingNegId = null; render(); }
+  else if (action === "negDeleteConfirm") { uiState.deletingNegId = null; handleDeleteNegociacao(id); }
+  else if (action === "negPagarParcela") handlePagarParcelaNegociacao(id);
+  else if (action === "negDesfazer") handleDesfazerParcelaNegociacao(id);
+});
+
+render();
+</script>
+</body>
+</html>
