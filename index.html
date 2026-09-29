@@ -662,6 +662,24 @@ html, body { height: 100%; margin: 0; }
   padding: 0;
 }
 .cat-tags-add { display: flex; gap: 6px; }
+.cat-tag-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--paper-card);
+  border: 1px solid var(--teal);
+  border-radius: 999px;
+  padding: 3px 4px 3px 10px;
+}
+.cat-tag-edit input {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  width: 90px;
+  padding: 2px 0;
+  color: var(--ink);
+}
+.cat-tag-edit input:focus { outline: none; }
 .cat-tags-add input {
   flex: 1;
   padding: 8px 10px;
@@ -1264,6 +1282,7 @@ var uiState = {
   deletingMetaId: null,
   addingNeg: false,
   deletingNegId: null,
+  editingTag: null,
 };
 
 
@@ -1481,6 +1500,23 @@ function handleAddClassTag(name) {
 function handleRemoveClassTag(name) {
   mutate(function (prev) {
     return Object.assign({}, prev, { classTags: (prev.classTags || []).filter(function (t) { return t !== name; }) });
+  });
+}
+
+function handleRenameClassTag(oldName, newNameRaw) {
+  var clean = newNameRaw.trim();
+  if (!clean || clean === oldName) return;
+  var label = clean.charAt(0).toUpperCase() + clean.slice(1);
+  mutate(function (prev) {
+    var existing = prev.classTags || [];
+    var conflict = existing.some(function (t) { return t !== oldName && t.toLowerCase() === label.toLowerCase(); }) ||
+      label.toLowerCase() === "necessidade" || label.toLowerCase() === "desejo";
+    if (conflict) return prev;
+    var classTags = existing.map(function (t) { return t === oldName ? label : t; });
+    var transactions = prev.transactions.map(function (t) {
+      return t.classificacao === oldName ? Object.assign({}, t, { classificacao: label }) : t;
+    });
+    return Object.assign({}, prev, { classTags: classTags, transactions: transactions });
   });
 }
 
@@ -2064,7 +2100,16 @@ function renderCategorias() {
     '<div class="cat-tags-list">' +
     '<span class="chip chip-sm cat-tag-fixed">Necessidade</span><span class="chip chip-sm cat-tag-fixed">Desejo</span>' +
     customTags.map(function (tag) {
+      if (uiState.editingTag === tag) {
+        return '<span class="cat-tag-edit">' +
+          '<input id="editTagInput" value="' + escapeHTML(tag) + '" autofocus>' +
+          '<button type="button" class="btn-ghost btn-xs" data-action="editTagCancel">Cancelar</button>' +
+          '<button type="button" class="btn-primary btn-xs" data-action="editTagSave" data-old="' + escapeHTML(tag) + '">Salvar</button>' +
+          '</span>';
+      }
       return '<span class="chip chip-sm cat-tag-removable">' + escapeHTML(tag) +
+        '<button type="button" aria-label="Editar ' + escapeHTML(tag) + '" data-action="editTagStart" data-value="' + escapeHTML(tag) + '">' +
+        '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
         '<button type="button" aria-label="Remover ' + escapeHTML(tag) + '" data-action="removeTag" data-value="' + escapeHTML(tag) + '">' +
         '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></span>';
     }).join("") +
@@ -2366,6 +2411,15 @@ document.getElementById("catView").addEventListener("click", function (e) {
     var action = el.dataset.action;
     if (action === "catPeriodo") { uiState.periodoCategorias = el.dataset.value; render(); }
     else if (action === "removeTag") handleRemoveClassTag(el.dataset.value);
+    else if (action === "editTagStart") { uiState.editingTag = el.dataset.value; render(); }
+    else if (action === "editTagCancel") { uiState.editingTag = null; render(); }
+    else if (action === "editTagSave") {
+      var input = document.getElementById("editTagInput");
+      var newName = input ? input.value : "";
+      var oldName = el.dataset.old;
+      uiState.editingTag = null;
+      handleRenameClassTag(oldName, newName);
+    }
   }
   if (e.target && e.target.id === "btnAddTag") {
     var input = document.getElementById("novaTagInput");
@@ -2377,6 +2431,12 @@ document.getElementById("catView").addEventListener("keydown", function (e) {
   if (e.target && e.target.id === "novaTagInput" && e.key === "Enter") {
     var val = e.target.value.trim();
     if (val) handleAddClassTag(val);
+  }
+  if (e.target && e.target.id === "editTagInput" && e.key === "Enter") {
+    var oldName = uiState.editingTag;
+    var newName = e.target.value;
+    uiState.editingTag = null;
+    handleRenameClassTag(oldName, newName);
   }
 });
 
