@@ -86,6 +86,7 @@ html, body { height: 100%; margin: 0; }
   cursor: pointer;
 }
 .topbar-btn:hover { background: #d6e6df; }
+.topbar-btn-group { display: flex; gap: 8px; }
 
 .balance-strip {
   margin: 4px 18px 10px;
@@ -359,6 +360,53 @@ html, body { height: 100%; margin: 0; }
   overflow: hidden;
   min-height: 0;
 }
+.lanc-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  overflow-y: auto;
+}
+.lanc-menu-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.lanc-menu-card:hover { border-color: var(--teal); }
+.lanc-menu-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.lanc-menu-icon-both { background: var(--teal-soft); color: var(--teal-dark); }
+.lanc-menu-icon-in { background: #E3F0E6; color: #2E7D46; }
+.lanc-menu-icon-out { background: var(--rust-soft); color: var(--rust); }
+.lanc-menu-title { display: block; font-weight: 600; font-size: 14.5px; color: var(--ink); }
+.lanc-menu-sub { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.lanc-screen-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px 0;
+}
+.lanc-back-btn {
+  background: var(--teal-soft);
+  border: none;
+  color: var(--teal-dark);
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.lanc-screen-title { font-weight: 600; font-size: 15px; color: var(--ink); }
 .filter-bar {
   padding: 4px 18px 8px;
   display: flex;
@@ -536,6 +584,20 @@ html, body { height: 100%; margin: 0; }
 }
 .fatura-status-paga { color: var(--teal-dark); }
 .fatura-status-atrasada { color: var(--rust); font-weight: 600; }
+.fatura-progresso { margin: 8px 0; }
+.fatura-progresso-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fatura-pagamento-row { display: flex; gap: 6px; margin: 8px 0 6px; }
+.fatura-pagamento-row input {
+  flex: 1;
+  border: 1px solid var(--paper-line);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--paper-card);
+}
+.fatura-pagamento-row input:focus { outline: none; border-color: var(--teal); }
 .atraso-dot {
   width: 7px;
   height: 7px;
@@ -773,6 +835,20 @@ html, body { height: 100%; margin: 0; }
 .import-msg { margin-top: 8px; font-size: 11.5px; padding: 6px 8px; border-radius: 8px; }
 .import-msg.ok { color: var(--teal-dark); background: var(--teal-soft); }
 .import-msg.err { color: var(--rust); background: var(--rust-soft); }
+.feedback-hint { font-size: 12px; color: var(--ink-soft); margin: 2px 0 8px; }
+.feedback-type-row { display: flex; gap: 6px; margin-bottom: 8px; }
+#feedbackText {
+  width: 100%;
+  border: 1px solid var(--paper-line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper-card);
+  resize: vertical;
+}
+#feedbackText:focus { outline: none; border-color: var(--teal); }
 </style>
 </head>
 <body>
@@ -780,9 +856,14 @@ html, body { height: 100%; margin: 0; }
   <div class="phone">
     <header class="topbar">
       <div class="topbar-title">Meu Dinheiro</div>
-      <button type="button" class="topbar-btn" id="btnSummary" aria-label="Resumo">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.6" fill="currentColor" stroke="none"/></svg>
-      </button>
+      <div class="topbar-btn-group">
+        <button type="button" class="topbar-btn" id="btnFeedback" aria-label="Enviar sugestão ou bug">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/><line x1="12" y1="8" x2="12" y2="12.5"/><circle cx="12" cy="15.3" r="0.9" fill="currentColor" stroke="none"/></svg>
+        </button>
+        <button type="button" class="topbar-btn" id="btnSummary" aria-label="Resumo">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="1.6" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="9" cy="18" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>
     </header>
 
     <div class="balance-strip">
@@ -818,6 +899,22 @@ html, body { height: 100%; margin: 0; }
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none">
       </div>
       <div class="import-msg" id="importMsg" hidden></div>
+    </div>
+
+    <div class="summary-panel" id="feedbackPanel" hidden>
+      <div class="summary-panel-head">
+        <span>Sugestões e bugs</span>
+      </div>
+      <p class="feedback-hint">Achou um erro ou tem uma ideia? Manda pra mim direto pelo WhatsApp.</p>
+      <div class="feedback-type-row">
+        <button type="button" class="chip chip-sm chip-active" id="fbTipoBug" data-action="fbTipo" data-value="bug">🐞 Bug</button>
+        <button type="button" class="chip chip-sm" id="fbTipoSugestao" data-action="fbTipo" data-value="sugestao">💡 Sugestão</button>
+      </div>
+      <textarea id="feedbackText" rows="4" placeholder="Descreve o que aconteceu ou sua ideia..."></textarea>
+      <button type="button" class="btn-primary btn-sm" id="btnSendFeedback" style="width:100%; justify-content:center; margin-top:8px;">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar pelo WhatsApp
+      </button>
     </div>
 
     <div class="view" id="view-chat">
@@ -1000,7 +1097,7 @@ function parseMessage(rawText, cards) {
     pagamento = "cartao";
   }
   if (parcelas > 1) pagamento = "cartao";
-  if (pagamento === "pix" || pagamento === "dinheiro") cardId = null;
+  if (pagamento === "pix" || pagamento === "dinheiro" || pagamento === "debito") cardId = null;
 
   var leftover = w.replace(/\s+/g, " ").trim().replace(/^[-,.:;]+|[-,.:;]+$/g, "").trim();
   leftover = leftover.replace(/\b(em|de|do|da|no|na)\b/gi, " ").replace(/\s+/g, " ").trim();
@@ -1015,7 +1112,7 @@ function parseMessage(rawText, cards) {
 
 function computeStatus(draft, cards) {
   if (!draft.pagamento) return "needPayment";
-  if ((draft.pagamento === "cartao" || draft.pagamento === "debito") && !draft.cardId) {
+  if (draft.pagamento === "cartao" && !draft.cardId) {
     if (cards.length === 0) return "cardForm";
     if (cards.length === 1) { draft.cardId = cards[0].id; return "confirm"; }
     return "cardPicker";
@@ -1031,7 +1128,7 @@ function buildTransactions(draft) {
   var allocated = 0;
   var txs = [];
   for (var i = 0; i < n; i++) {
-    var d = new Date(base.getFullYear(), base.getMonth() + i, base.getDate());
+    var d = dateInMonthClamped(base.getFullYear(), base.getMonth() + i, base.getDate());
     var value = parcelaValor;
     if (i === n - 1) value = Math.round((draft.valor - allocated) * 100) / 100;
     else allocated += parcelaValor;
@@ -1070,12 +1167,24 @@ function sameMonth(dateStr, now) {
   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
 }
 
-function diasAtrasoFatura(card, faturaValor, pagaRecord, now) {
-  if (!card.dueDay || faturaValor <= 0 || pagaRecord) return 0;
+function diasAtrasoFatura(card, faturaValor, quitada, now) {
+  if (!card.dueDay || faturaValor <= 0 || quitada) return 0;
   var hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var vencimento = new Date(now.getFullYear(), now.getMonth(), card.dueDay);
+  var vencimento = dateInMonthClamped(now.getFullYear(), now.getMonth(), card.dueDay, 0);
   var diff = Math.floor((hoje - vencimento) / 86400000);
   return diff > 0 ? diff : 0;
+}
+
+function valorPagoFatura(cardId, mesAno, faturaAtual) {
+  var entries = (store.faturasPagas || []).filter(function (f) { return f.cardId === cardId && f.mesAno === mesAno; });
+  var total = 0;
+  var hasLegacyFull = false;
+  entries.forEach(function (f) {
+    if (typeof f.valor === "number") total += f.valor;
+    else hasLegacyFull = true;
+  });
+  if (hasLegacyFull) total = Math.max(total, faturaAtual);
+  return Math.round(total * 100) / 100;
 }
 
 function computeSuggestedReserve(transactions) {
@@ -1129,6 +1238,11 @@ function passesFilter(t, filtros, now) {
     }
   }
   return true;
+}
+
+function dateInMonthClamped(year, month, day, hour) {
+  var lastDay = new Date(year, month + 1, 0).getDate();
+  return new Date(year, month, Math.min(day, lastDay), hour == null ? 12 : hour, 0, 0);
 }
 
 function newId(prefix) {
@@ -1222,6 +1336,19 @@ function showImportMsg(text, ok) {
   el.hidden = false;
 }
 
+var FEEDBACK_WHATSAPP = atob("NTU4MTk4OTYzNzYzMg==");
+
+function handleSendFeedback() {
+  var textEl = document.getElementById("feedbackText");
+  var texto = textEl.value.trim();
+  if (!texto) { textEl.focus(); return; }
+  var tipoLabel = uiState.feedbackTipo === "bug" ? "🐞 Bug" : "💡 Sugestão";
+  var msg = "Meu Dinheiro — " + tipoLabel + ":\n" + texto;
+  var url = "https://wa.me/" + FEEDBACK_WHATSAPP + "?text=" + encodeURIComponent(msg);
+  window.open(url, "_blank");
+  textEl.value = "";
+}
+
 function handleExportData() {
   var blob = new Blob([JSON.stringify(store, null, 2)], { type: "application/json" });
   var url = URL.createObjectURL(blob);
@@ -1268,7 +1395,9 @@ function handleImportFile(file) {
 var store = loadStore();
 
 var uiState = {
+  lancSection: null,
   filtros: { periodo: "mes", tipo: "todos", classificacao: "todos", pagamento: "todos" },
+  lancTela: "menu",
   editingTxId: null,
   editClass: null,
   deletingTxId: null,
@@ -1283,6 +1412,7 @@ var uiState = {
   addingNeg: false,
   deletingNegId: null,
   editingTag: null,
+  feedbackTipo: "bug",
 };
 
 
@@ -1466,18 +1596,22 @@ function handleDeleteCard(cardId) {
   mutate(function (prev) { return Object.assign({}, prev, { cards: prev.cards.filter(function (c) { return c.id !== cardId; }) }); });
 }
 
-function handleMarkFaturaPaga(cardId, mesAno) {
+function handleRegistrarPagamentoFatura(cardId, mesAno, valor) {
+  if (isNaN(valor) || valor <= 0) return;
   mutate(function (prev) {
-    var existente = (prev.faturasPagas || []).find(function (f) { return f.cardId === cardId && f.mesAno === mesAno; });
-    if (existente) return prev;
-    var registro = { id: newId("fatura"), cardId: cardId, mesAno: mesAno, pagoEm: new Date().toISOString() };
+    var registro = { id: newId("fatura"), cardId: cardId, mesAno: mesAno, valor: Math.round(valor * 100) / 100, data: new Date().toISOString() };
     return Object.assign({}, prev, { faturasPagas: (prev.faturasPagas || []).concat([registro]) });
   });
 }
 
-function handleUnmarkFaturaPaga(id) {
+function handleDesfazerPagamentoFatura(cardId, mesAno) {
   mutate(function (prev) {
-    return Object.assign({}, prev, { faturasPagas: (prev.faturasPagas || []).filter(function (f) { return f.id !== id; }) });
+    var entries = (prev.faturasPagas || []).filter(function (f) { return f.cardId === cardId && f.mesAno === mesAno; });
+    if (entries.length === 0) return prev;
+    var ultima = entries.slice().sort(function (a, b) {
+      return new Date(b.data || b.pagoEm) - new Date(a.data || a.pagoEm);
+    })[0];
+    return Object.assign({}, prev, { faturasPagas: prev.faturasPagas.filter(function (f) { return f.id !== ultima.id; }) });
   });
 }
 
@@ -1758,7 +1892,7 @@ function renderSummary() {
   list.innerHTML = store.cards.map(function (c) {
     var total = store.transactions.filter(function (t) {
       var d = new Date(t.data);
-      return t.cardId === c.id && t.tipo === "despesa" && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      return t.cardId === c.id && t.tipo === "despesa" && t.pagamento === "cartao" && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).reduce(function (s, t) { return s + t.valor; }, 0);
     return '<div class="summary-card-row"><span class="summary-card-name">' + escapeHTML(c.name) + '</span><span class="summary-card-fatura">' + formatCurrency(total) + '</span></div>';
   }).join("");
@@ -1777,17 +1911,25 @@ function render() {
 
 /* ---------------------------- view: lançamentos ----------------------------- */
 
-function filterBarHTML(tags) {
+function filterBarHTML(tags, opts) {
+  opts = opts || {};
   var f = uiState.filtros;
-  var tipoBtns = ["todos", "despesa", "receita"].map(function (v) {
-    var label = v === "todos" ? "Todos" : v === "despesa" ? "Despesas" : "Receitas";
-    return '<button type="button" class="chip chip-sm' + (f.tipo === v ? " chip-active" : "") + '" data-action="filtroTipo" data-value="' + v + '">' + label + '</button>';
-  }).join("");
-  var periodoBtn = '<button type="button" class="chip chip-sm' + (f.periodo === "mes" ? " chip-active" : "") + '" data-action="filtroPeriodo">' + (f.periodo === "mes" ? "Este mês" : "Tudo") + '</button>';
-  var classBtns = '<button type="button" class="chip chip-sm' + (f.classificacao === "todos" ? " chip-active" : "") + '" data-action="filtroClass" data-value="todos">Todas</button>' +
-    tags.map(function (tag) {
-      return '<button type="button" class="chip chip-sm' + (f.classificacao === tag ? " chip-active" : "") + '" data-action="filtroClass" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+  var tipoBtns = "";
+  if (!opts.hideTipo) {
+    tipoBtns = ["todos", "despesa", "receita"].map(function (v) {
+      var label = v === "todos" ? "Todos" : v === "despesa" ? "Despesas" : "Receitas";
+      return '<button type="button" class="chip chip-sm' + (f.tipo === v ? " chip-active" : "") + '" data-action="filtroTipo" data-value="' + v + '">' + label + '</button>';
     }).join("");
+  }
+  var periodoBtn = '<button type="button" class="chip chip-sm' + (f.periodo === "mes" ? " chip-active" : "") + '" data-action="filtroPeriodo">' + (f.periodo === "mes" ? "Este mês" : "Tudo") + '</button>';
+  var classRow = "";
+  if (!opts.hideClass) {
+    var classBtns = '<button type="button" class="chip chip-sm' + (f.classificacao === "todos" ? " chip-active" : "") + '" data-action="filtroClass" data-value="todos">Todas</button>' +
+      tags.map(function (tag) {
+        return '<button type="button" class="chip chip-sm' + (f.classificacao === tag ? " chip-active" : "") + '" data-action="filtroClass" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+      }).join("");
+    classRow = '<div class="filter-row">' + classBtns + '</div>';
+  }
   var select = "";
   if (store.cards.length > 0) {
     select = '<select class="filter-select" id="filtroPagamentoSelect">' +
@@ -1799,7 +1941,32 @@ function filterBarHTML(tags) {
       }).join("") +
       '</select>';
   }
-  return '<div class="filter-bar"><div class="filter-row">' + tipoBtns + periodoBtn + '</div><div class="filter-row">' + classBtns + '</div>' + select + '</div>';
+  return '<div class="filter-bar"><div class="filter-row">' + tipoBtns + periodoBtn + '</div>' + classRow + select + '</div>';
+}
+
+function lancMenuHTML() {
+  var now = new Date();
+  var receitasMes = store.transactions.filter(function (t) { return t.tipo === "receita" && sameMonth(t.data, now); }).reduce(function (s, t) { return s + t.valor; }, 0);
+  var despesasMes = store.transactions.filter(function (t) { return t.tipo === "despesa" && sameMonth(t.data, now); }).reduce(function (s, t) { return s + t.valor; }, 0);
+  var iconBoth = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16v18l-3-2-3 2-3-2-3 2-3-2-3 2V3z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>';
+  var iconUp = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>';
+  var iconDown = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="5 12 12 19 19 12"/></svg>';
+  return (
+    '<div class="lanc-menu">' +
+      '<button type="button" class="lanc-menu-card" data-action="lancGoto" data-value="todos">' +
+        '<span class="lanc-menu-icon lanc-menu-icon-both">' + iconBoth + '</span>' +
+        '<span class="lanc-menu-text"><span class="lanc-menu-title">Entradas e Saídas</span><span class="lanc-menu-sub">Ver tudo junto</span></span>' +
+      '</button>' +
+      '<button type="button" class="lanc-menu-card" data-action="lancGoto" data-value="entradas">' +
+        '<span class="lanc-menu-icon lanc-menu-icon-in">' + iconUp + '</span>' +
+        '<span class="lanc-menu-text"><span class="lanc-menu-title">Entradas</span><span class="lanc-menu-sub">' + formatCurrency(receitasMes) + ' este mês</span></span>' +
+      '</button>' +
+      '<button type="button" class="lanc-menu-card" data-action="lancGoto" data-value="saidas">' +
+        '<span class="lanc-menu-icon lanc-menu-icon-out">' + iconDown + '</span>' +
+        '<span class="lanc-menu-text"><span class="lanc-menu-title">Saídas</span><span class="lanc-menu-sub">' + formatCurrency(despesasMes) + ' este mês</span></span>' +
+      '</button>' +
+    '</div>'
+  );
 }
 
 function lancRowHTML(t, tags) {
@@ -1853,9 +2020,19 @@ function lancRowHTML(t, tags) {
 }
 
 function renderLancamentos() {
+  var container = document.getElementById("lancView");
+
+  if (!uiState.lancTela || uiState.lancTela === "menu") {
+    container.innerHTML = lancMenuHTML();
+    return;
+  }
+
+  var tela = uiState.lancTela; // "todos" | "entradas" | "saidas"
   var now = new Date();
   var tags = ["necessidade", "desejo"].concat(store.classTags || []);
-  var filtered = store.transactions.filter(function (t) { return passesFilter(t, uiState.filtros, now); });
+  var effectiveTipo = tela === "entradas" ? "receita" : tela === "saidas" ? "despesa" : "todos";
+  var filtrosEfetivos = Object.assign({}, uiState.filtros, { tipo: effectiveTipo });
+  var filtered = store.transactions.filter(function (t) { return passesFilter(t, filtrosEfetivos, now); });
   var sorted = filtered.slice().sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
   var totalReceitas = filtered.filter(function (t) { return t.tipo === "receita"; }).reduce(function (s, t) { return s + t.valor; }, 0);
   var totalDespesas = filtered.filter(function (t) { return t.tipo === "despesa"; }).reduce(function (s, t) { return s + t.valor; }, 0);
@@ -1869,8 +2046,18 @@ function renderLancamentos() {
     groups[groups.length - 1].items.push(t);
   });
 
-  var html = filterBarHTML(tags);
-  html += '<div class="lanc-totals"><span class="lanc-total-receita">Receitas ' + formatCurrency(totalReceitas) + '</span><span class="lanc-total-despesa">Despesas ' + formatCurrency(totalDespesas) + '</span></div>';
+  var title = tela === "entradas" ? "Entradas" : tela === "saidas" ? "Saídas" : "Entradas e Saídas";
+  var html = '<div class="lanc-screen-head"><button type="button" class="lanc-back-btn" data-action="lancBack" aria-label="Voltar">' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>' +
+    '<span class="lanc-screen-title">' + title + '</span></div>';
+
+  html += filterBarHTML(tags, { hideTipo: true, hideClass: tela === "entradas" });
+
+  html += '<div class="lanc-totals">';
+  if (tela !== "saidas") html += '<span class="lanc-total-receita">Receitas ' + formatCurrency(totalReceitas) + '</span>';
+  if (tela !== "entradas") html += '<span class="lanc-total-despesa">Despesas ' + formatCurrency(totalDespesas) + '</span>';
+  html += '</div>';
+
   html += '<div class="lanc-list">';
   if (sorted.length === 0) html += '<div class="lanc-empty">Nenhum lançamento encontrado com esses filtros.</div>';
   groups.forEach(function (g) {
@@ -1879,7 +2066,7 @@ function renderLancamentos() {
     html += '</div>';
   });
   html += '</div>';
-  document.getElementById("lancView").innerHTML = html;
+  container.innerHTML = html;
 }
 
 /* ------------------------------- view: cartão -------------------------------- */
@@ -1936,24 +2123,27 @@ function renderCartao() {
   container.className = "cartao-view";
   var card = cards.find(function (c) { return c.id === uiState.selectedCardId; }) || cards[0];
   var mesAno = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
-  var pagaRecord = (store.faturasPagas || []).find(function (f) { return f.cardId === card.id && f.mesAno === mesAno; });
   var faturaTxs = store.transactions
-    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && sameMonth(t.data, now); })
+    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao" && sameMonth(t.data, now); })
     .sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
   var faturaAtual = faturaTxs.reduce(function (s, t) { return s + t.valor; }, 0);
+  var valorPago = valorPagoFatura(card.id, mesAno, faturaAtual);
+  var quitada = faturaAtual > 0 && valorPago >= faturaAtual;
+  var restante = Math.max(0, Math.round((faturaAtual - valorPago) * 100) / 100);
   var futuras = store.transactions
-    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.totalParcelas && !sameMonth(t.data, now); })
+    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao" && t.totalParcelas && !sameMonth(t.data, now); })
     .sort(function (a, b) { return new Date(a.data) - new Date(b.data); });
   var compromissoFuturo = futuras.reduce(function (s, t) { return s + t.valor; }, 0);
-  var diasAtraso = diasAtrasoFatura(card, faturaAtual, pagaRecord, now);
+  var diasAtraso = diasAtrasoFatura(card, faturaAtual, quitada, now);
 
   var cardsComAtraso = {};
   cards.forEach(function (c) {
-    var rec = (store.faturasPagas || []).find(function (f) { return f.cardId === c.id && f.mesAno === mesAno; });
     var valor = store.transactions
-      .filter(function (t) { return t.cardId === c.id && t.tipo === "despesa" && sameMonth(t.data, now); })
+      .filter(function (t) { return t.cardId === c.id && t.tipo === "despesa" && t.pagamento === "cartao" && sameMonth(t.data, now); })
       .reduce(function (s, t) { return s + t.valor; }, 0);
-    if (diasAtrasoFatura(c, valor, rec, now) > 0) cardsComAtraso[c.id] = true;
+    var pago = valorPagoFatura(c.id, mesAno, valor);
+    var quit = valor > 0 && pago >= valor;
+    if (diasAtrasoFatura(c, valor, quit, now) > 0) cardsComAtraso[c.id] = true;
   });
 
   var switchHTML = '<div class="cartao-switch">' +
@@ -1966,14 +2156,29 @@ function renderCartao() {
   var statusHTML;
   if (faturaAtual <= 0) {
     statusHTML = "";
-  } else if (pagaRecord) {
-    statusHTML = '<div class="fatura-status fatura-status-paga">Paga em ' + new Date(pagaRecord.pagoEm).toLocaleDateString("pt-BR") +
-      ' <button type="button" class="link-btn" data-action="unmarkFaturaPaga" data-id="' + pagaRecord.id + '">Desfazer</button></div>';
+  } else if (quitada) {
+    var entradasPagas = (store.faturasPagas || []).filter(function (f) { return f.cardId === card.id && f.mesAno === mesAno; });
+    var ultimaData = entradasPagas.length
+      ? entradasPagas.map(function (f) { return f.data || f.pagoEm; }).sort(function (a, b) { return new Date(b) - new Date(a); })[0]
+      : null;
+    statusHTML = '<div class="fatura-status fatura-status-paga">' +
+      (ultimaData ? 'Paga em ' + new Date(ultimaData).toLocaleDateString("pt-BR") : 'Paga') +
+      ' <button type="button" class="link-btn" data-action="desfazerPagamentoFatura" data-card="' + card.id + '" data-mesano="' + mesAno + '">Desfazer último pagamento</button></div>';
   } else {
-    statusHTML = (diasAtraso > 0
-      ? '<div class="fatura-status fatura-status-atrasada"><span class="atraso-dot"></span> Atrasada há ' + diasAtraso + (diasAtraso === 1 ? " dia" : " dias") + '</div>'
-      : '') +
-      '<button type="button" class="btn-primary btn-sm cartao-pagar-btn" data-action="markFaturaPaga" data-card="' + card.id + '" data-mesano="' + mesAno + '">Marcar fatura como paga</button>';
+    var progressoHTML = valorPago > 0
+      ? '<div class="fatura-progresso"><div class="balance-bar"><div class="balance-bar-fill fill-teal" style="width:' + Math.min(100, (valorPago / faturaAtual) * 100) + '%"></div></div>' +
+        '<div class="fatura-progresso-sub">' + formatCurrency(valorPago) + ' de ' + formatCurrency(faturaAtual) + ' pagos' +
+        ' <button type="button" class="link-btn" data-action="desfazerPagamentoFatura" data-card="' + card.id + '" data-mesano="' + mesAno + '">Desfazer último</button></div></div>'
+      : '';
+    statusHTML = progressoHTML +
+      (diasAtraso > 0
+        ? '<div class="fatura-status fatura-status-atrasada"><span class="atraso-dot"></span> Atrasada há ' + diasAtraso + (diasAtraso === 1 ? " dia" : " dias") + '</div>'
+        : '') +
+      '<div class="fatura-pagamento-row">' +
+        '<input id="pagamentoFaturaInput" placeholder="Valor pago (R$)" inputmode="decimal">' +
+        '<button type="button" class="btn-primary btn-sm" data-action="registrarPagamentoFatura" data-card="' + card.id + '" data-mesano="' + mesAno + '">Registrar</button>' +
+      '</div>' +
+      '<button type="button" class="btn-ghost btn-sm cartao-pagar-btn" data-action="pagarFaturaRestante" data-card="' + card.id + '" data-mesano="' + mesAno + '" data-restante="' + restante + '">Marcar restante (' + formatCurrency(restante) + ') como pago</button>';
   }
 
   var heroHTML = '<div class="cartao-hero">' +
@@ -2289,6 +2494,26 @@ document.getElementById("importFileInput").addEventListener("change", function (
   e.target.value = "";
 });
 
+document.getElementById("btnFeedback").addEventListener("click", function () {
+  var panel = document.getElementById("feedbackPanel");
+  panel.hidden = !panel.hidden;
+  if (!panel.hidden) document.getElementById("summaryPanel").hidden = true;
+});
+document.getElementById("btnSummary").addEventListener("click", function () {
+  document.getElementById("feedbackPanel").hidden = true;
+});
+document.getElementById("fbTipoBug").addEventListener("click", function () {
+  uiState.feedbackTipo = "bug";
+  document.getElementById("fbTipoBug").classList.add("chip-active");
+  document.getElementById("fbTipoSugestao").classList.remove("chip-active");
+});
+document.getElementById("fbTipoSugestao").addEventListener("click", function () {
+  uiState.feedbackTipo = "sugestao";
+  document.getElementById("fbTipoSugestao").classList.add("chip-active");
+  document.getElementById("fbTipoBug").classList.remove("chip-active");
+});
+document.getElementById("btnSendFeedback").addEventListener("click", handleSendFeedback);
+
 document.querySelectorAll(".tab-btn").forEach(function (btn) {
   btn.addEventListener("click", function () {
     document.querySelectorAll(".tab-btn").forEach(function (b) { b.classList.remove("tab-active"); });
@@ -2329,7 +2554,9 @@ document.getElementById("lancView").addEventListener("click", function (e) {
   if (!el) return;
   var action = el.dataset.action;
   var id = el.dataset.id;
-  if (action === "filtroTipo") { uiState.filtros.tipo = el.dataset.value; render(); }
+  if (action === "lancGoto") { uiState.lancTela = el.dataset.value; render(); }
+  else if (action === "lancBack") { uiState.lancTela = "menu"; render(); }
+  else if (action === "filtroTipo") { uiState.filtros.tipo = el.dataset.value; render(); }
   else if (action === "filtroPeriodo") { uiState.filtros.periodo = uiState.filtros.periodo === "mes" ? "todos" : "mes"; render(); }
   else if (action === "filtroClass") { uiState.filtros.classificacao = el.dataset.value; render(); }
   else if (action === "startEditTx") {
@@ -2396,11 +2623,28 @@ document.getElementById("cartaoView").addEventListener("click", function (e) {
     handleRegisterCardDirect(vals);
   }
   else if (action === "selectCard") { uiState.selectedCardId = el.dataset.card; render(); }
-  else if (action === "unmarkFaturaPaga") handleUnmarkFaturaPaga(el.dataset.id);
-  else if (action === "markFaturaPaga") handleMarkFaturaPaga(el.dataset.card, el.dataset.mesano);
+  else if (action === "desfazerPagamentoFatura") handleDesfazerPagamentoFatura(el.dataset.card, el.dataset.mesano);
+  else if (action === "registrarPagamentoFatura") {
+    var input = document.getElementById("pagamentoFaturaInput");
+    var valor = input ? parseValorBR(input.value) : NaN;
+    handleRegistrarPagamentoFatura(el.dataset.card, el.dataset.mesano, valor);
+  }
+  else if (action === "pagarFaturaRestante") {
+    var restanteVal = parseFloat(el.dataset.restante);
+    handleRegistrarPagamentoFatura(el.dataset.card, el.dataset.mesano, restanteVal);
+  }
   else if (action === "deleteCardAsk") { uiState.deletingCardId = el.dataset.card; render(); }
   else if (action === "deleteCardCancel") { uiState.deletingCardId = null; render(); }
   else if (action === "deleteCardConfirm") { uiState.deletingCardId = null; handleDeleteCard(el.dataset.card); }
+});
+document.getElementById("cartaoView").addEventListener("keydown", function (e) {
+  if (e.target && e.target.id === "pagamentoFaturaInput" && e.key === "Enter") {
+    var btn = document.querySelector('[data-action="registrarPagamentoFatura"]');
+    if (btn) {
+      var valor = parseValorBR(e.target.value);
+      handleRegistrarPagamentoFatura(btn.dataset.card, btn.dataset.mesano, valor);
+    }
+  }
 });
 
 /* -------- categorias -------- */
