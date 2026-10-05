@@ -1185,7 +1185,7 @@ function buildTransactions(draft, cards, baseOverride) {
     startMonth += 1;
     if (startMonth > 11) { startMonth = 0; startYear += 1; }
   }
-  var diaCobranca = usarVencimento ? (card.dueDay || card.closingDay) : base.getDate();
+  var diaCobranca = (usarVencimento && card.dueDay) ? card.dueDay : base.getDate();
 
   for (var i = 0; i < n; i++) {
     var d = usarVencimento
@@ -1827,7 +1827,7 @@ function handleAddMeta(vals) {
     id: newId("meta"),
     nome: vals.nome.trim(),
     valorAlvo: parseValorBR(vals.valorAlvo) || 0,
-    valorAtual: 0,
+    valorAtual: vals.valorAtual ? (parseValorBR(vals.valorAtual) || 0) : 0,
     prazo: vals.prazo || null,
     tipo: vals.tipo || "normal",
   };
@@ -2655,6 +2655,7 @@ function metaFormHTML(defaultReserva) {
       '<div class="inline-form-title">' + (defaultReserva ? "Criar reserva de emergência" : "Nova meta") + '</div>' +
       '<label>Nome<input id="mf-nome" value="' + (defaultReserva ? "Reserva de emergência" : "") + '" placeholder="Ex: Viagem, Reserva de emergência"' + (defaultReserva ? "" : " autofocus") + '></label>' +
       '<label>Valor alvo<input id="mf-valor" placeholder="R$" inputmode="decimal"></label>' +
+      '<label>Já tenho guardado (opcional)<input id="mf-atual" placeholder="R$ 0,00" inputmode="decimal"></label>' +
       '<label>Prazo (opcional)<input type="month" id="mf-prazo"></label>' +
       (defaultReserva ? "" : '<label class="inline-form-checkbox"><input type="checkbox" id="mf-reserva"> Marcar como reserva de emergência</label>') +
       '<div class="inline-form-actions">' +
@@ -3091,6 +3092,7 @@ document.getElementById("metasView").addEventListener("click", function (e) {
     var vals = {
       nome: document.getElementById("mf-nome").value,
       valorAlvo: document.getElementById("mf-valor").value,
+      valorAtual: document.getElementById("mf-atual").value,
       prazo: document.getElementById("mf-prazo").value,
       tipo: uiState.addingMeta === "reserva" ? "reserva" : (document.getElementById("mf-reserva") && document.getElementById("mf-reserva").checked ? "reserva" : "normal"),
     };

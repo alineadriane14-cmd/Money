@@ -1,4 +1,4 @@
-var CACHE_NAME = "meu-dinheiro-cache-v1";
+var CACHE_NAME = "meu-dinheiro-cache-v2";
 var ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", function (event) {
@@ -21,22 +21,21 @@ self.addEventListener("activate", function (event) {
   self.clients.claim();
 });
 
+// Network-first: sempre tenta buscar a versao mais nova na internet.
+// So usa o que esta salvo em cache se nao conseguir conexao (modo offline).
 self.addEventListener("fetch", function (event) {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
-      var fetchPromise = fetch(event.request)
-        .then(function (response) {
-          var copy = response.clone();
-          caches.open(CACHE_NAME).then(function (cache) {
-            cache.put(event.request, copy);
-          }).catch(function () {});
-          return response;
-        })
-        .catch(function () {
-          return cached;
-        });
-      return cached || fetchPromise;
-    })
+    fetch(event.request)
+      .then(function (response) {
+        var copy = response.clone();
+        caches.open(CACHE_NAME).then(function (cache) {
+          cache.put(event.request, copy);
+        }).catch(function () {});
+        return response;
+      })
+      .catch(function () {
+        return caches.match(event.request);
+      })
   );
 });
