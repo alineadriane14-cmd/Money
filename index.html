@@ -555,6 +555,8 @@ html, body { height: 100%; margin: 0; }
 }
 .cartao-empty .btn-primary { flex: none; padding: 9px 18px; }
 .cartao-switch { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; }
+.cartao-add-compra-row { display: flex; justify-content: flex-end; }
+.cartao-add-compra-row .btn-sm { display: inline-flex; }
 .cartao-hero {
   background: var(--paper-card);
   border: 1px solid var(--paper-line);
@@ -573,6 +575,32 @@ html, body { height: 100%; margin: 0; }
   color: var(--ink);
 }
 .cartao-hero-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.cartao-hero-name-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
+.cartao-hero-name-row .cartao-hero-name { margin-bottom: 0; }
+.cartao-edit-btn {
+  background: var(--teal-soft);
+  border: none;
+  color: var(--teal-dark);
+  width: 24px; height: 24px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.cartao-mes-nav-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 2px; }
+.cartao-mes-nav {
+  background: var(--teal-soft);
+  border: none;
+  color: var(--teal-dark);
+  width: 22px; height: 22px;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.cartao-mes-hoje { font-size: 11px; }
 .cartao-hero-dates { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
 .cartao-hero-limit { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
 .fatura-status {
@@ -786,6 +814,25 @@ html, body { height: 100%; margin: 0; }
 .inline-form-checkbox input { width: auto; padding: 0; }
 
 .metas-list { display: flex; flex-direction: column; gap: 10px; }
+.reserva-resumo {
+  background: var(--gold-soft, #FBF0DB);
+  border: 1px solid var(--gold);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+.reserva-resumo-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+}
+.reserva-resumo-valor {
+  font-family: 'Fraunces', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 4px 0 8px;
+}
+.reserva-resumo-alvo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
 .meta-card {
   background: var(--paper-card);
   border: 1px solid var(--paper-line);
@@ -1120,9 +1167,9 @@ function computeStatus(draft, cards) {
   return "confirm";
 }
 
-function buildTransactions(draft, cards) {
+function buildTransactions(draft, cards, baseOverride) {
   var n = draft.parcelas || 1;
-  var base = new Date();
+  var base = baseOverride || new Date();
   var card = draft.cardId ? (cards || []).find(function (c) { return c.id === draft.cardId; }) : null;
   var parcelaValor = Math.round((draft.valor / n) * 100) / 100;
   var groupId = n > 1 ? "grp-" + Date.now() : null;
@@ -1202,10 +1249,12 @@ function faturaMesFor(dataStr, card) {
   return year + "-" + String(month + 1).padStart(2, "0");
 }
 
-function diasAtrasoFatura(card, faturaValor, quitada, now) {
+function diasAtrasoFatura(card, faturaValor, quitada, now, vencYear, vencMonth) {
   if (!card.dueDay || faturaValor <= 0 || quitada) return 0;
   var hoje = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var vencimento = dateInMonthClamped(now.getFullYear(), now.getMonth(), card.dueDay, 0);
+  var vy = vencYear == null ? now.getFullYear() : vencYear;
+  var vm = vencMonth == null ? now.getMonth() : vencMonth;
+  var vencimento = dateInMonthClamped(vy, vm, card.dueDay, 0);
   var diff = Math.floor((hoje - vencimento) / 86400000);
   return diff > 0 ? diff : 0;
 }
@@ -1445,6 +1494,10 @@ var uiState = {
   deletingTxId: null,
   selectedCardId: null,
   addingCard: false,
+  editingCardId: null,
+  cartaoMesOffset: 0,
+  addingCompra: false,
+  compraClass: null,
   deletingCardId: null,
   periodoCategorias: "mes",
   catTela: "saidas",
@@ -1632,6 +1685,43 @@ function handleRegisterCardDirect(vals) {
   };
   uiState.selectedCardId = newCard.id;
   mutate(function (prev) { return Object.assign({}, prev, { cards: prev.cards.concat([newCard]) }); });
+}
+
+function handleEditCardDirect(cardId, vals) {
+  mutate(function (prev) {
+    var cards = prev.cards.map(function (c) {
+      if (c.id !== cardId) return c;
+      return Object.assign({}, c, {
+        name: vals.name.trim() || c.name,
+        closingDay: vals.closingDay ? Number(vals.closingDay) : null,
+        dueDay: vals.dueDay ? Number(vals.dueDay) : null,
+        limit: vals.limit ? parseValorBR(vals.limit) : null,
+      });
+    });
+    return Object.assign({}, prev, { cards: cards });
+  });
+}
+
+function handleAddCompraCartao(cardId, vals) {
+  var valor = parseValorBR(vals.valor);
+  if (isNaN(valor) || valor <= 0) return;
+  var parcelas = Math.max(1, parseInt(vals.parcelas, 10) || 1);
+  var categoriaVal = (vals.categoria || "").trim();
+  var categoria = categoriaVal ? categoriaVal.charAt(0).toUpperCase() + categoriaVal.slice(1) : "Outros";
+  var baseDate = vals.data ? new Date(vals.data + "T12:00:00") : new Date();
+  var draft = {
+    tipo: "despesa",
+    valor: valor,
+    categoria: categoria,
+    classificacao: vals.classificacao || "Não classificado",
+    pagamento: "cartao",
+    cardId: cardId,
+    parcelas: parcelas,
+  };
+  mutate(function (prev) {
+    var txs = buildTransactions(draft, prev.cards, baseDate);
+    return Object.assign({}, prev, { transactions: prev.transactions.concat(txs) });
+  });
 }
 
 function handleDeleteCard(cardId) {
@@ -2172,19 +2262,44 @@ function renderLancamentos() {
 
 /* ------------------------------- view: cartão -------------------------------- */
 
-function cartaoCardFormHTML() {
+function cartaoCardFormHTML(editCard) {
+  var isEdit = !!editCard;
   return (
     '<div class="inline-form">' +
-      '<div class="inline-form-title">Cadastrar cartão</div>' +
-      '<label>Apelido<input id="ccf-name" placeholder="Ex: Nubank" autofocus></label>' +
+      '<div class="inline-form-title">' + (isEdit ? "Editar cartão" : "Cadastrar cartão") + '</div>' +
+      '<label>Apelido<input id="ccf-name" value="' + (isEdit ? escapeHTML(editCard.name) : "") + '" placeholder="Ex: Nubank" autofocus></label>' +
       '<div class="inline-form-row">' +
-        '<label>Fechamento<input id="ccf-closing" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
-        '<label>Vencimento<input id="ccf-due" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+        '<label>Fechamento<input id="ccf-closing" value="' + (isEdit && editCard.closingDay ? editCard.closingDay : "") + '" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
+        '<label>Vencimento<input id="ccf-due" value="' + (isEdit && editCard.dueDay ? editCard.dueDay : "") + '" placeholder="dia" inputmode="numeric" maxlength="2"></label>' +
       '</div>' +
-      '<label>Limite (opcional)<input id="ccf-limit" placeholder="R$" inputmode="decimal"></label>' +
+      '<label>Limite (opcional)<input id="ccf-limit" value="' + (isEdit && editCard.limit ? editCard.limit : "") + '" placeholder="R$" inputmode="decimal"></label>' +
       '<div class="inline-form-actions">' +
         '<button type="button" class="btn-ghost" data-action="cartaoCancelCard">Cancelar</button>' +
-        '<button type="button" class="btn-primary" data-action="cartaoSaveCard">Salvar cartão</button>' +
+        (isEdit
+          ? '<button type="button" class="btn-primary" data-action="cartaoSaveEditCard" data-card="' + editCard.id + '">Salvar alterações</button>'
+          : '<button type="button" class="btn-primary" data-action="cartaoSaveCard">Salvar cartão</button>') +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function cartaoCompraFormHTML(card, tags) {
+  var pills = tags.map(function (tag) {
+    return '<button type="button" class="pill' + (uiState.compraClass === tag ? " pill-active" : "") + '" data-action="compraTogglePill" data-value="' + tag + '">' + labelForTag(tag) + '</button>';
+  }).join("");
+  return (
+    '<div class="inline-form">' +
+      '<div class="inline-form-title">Nova compra — ' + escapeHTML(card.name) + '</div>' +
+      '<label>Categoria<input id="cc-categoria" placeholder="Ex: Mercado" autofocus></label>' +
+      '<div class="inline-form-row">' +
+        '<label>Valor<input id="cc-valor" placeholder="R$" inputmode="decimal"></label>' +
+        '<label>Parcelas<input id="cc-parcelas" value="1" inputmode="numeric" maxlength="2"></label>' +
+      '</div>' +
+      '<label>Data<input type="date" id="cc-data" value="' + new Date().toISOString().slice(0, 10) + '"></label>' +
+      '<div class="class-toggle class-toggle-wrap">' + pills + '</div>' +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="cartaoCancelCompra">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="cartaoSaveCompra" data-card="' + card.id + '">Salvar compra</button>' +
       '</div>' +
     '</div>'
   );
@@ -2215,15 +2330,32 @@ function renderCartao() {
     return;
   }
 
+  var card0 = cards.find(function (c) { return c.id === uiState.selectedCardId; }) || cards[0];
+
   if (uiState.addingCard) {
     container.className = "cartao-view";
     container.innerHTML = cartaoCardFormHTML();
     return;
   }
+  if (uiState.editingCardId) {
+    var editCard = cards.find(function (c) { return c.id === uiState.editingCardId; });
+    container.className = "cartao-view";
+    container.innerHTML = cartaoCardFormHTML(editCard);
+    return;
+  }
+  if (uiState.addingCompra) {
+    container.className = "cartao-view";
+    var tagsCompra = ["necessidade", "desejo"].concat(store.classTags || []);
+    container.innerHTML = cartaoCompraFormHTML(card0, tagsCompra);
+    return;
+  }
 
   container.className = "cartao-view";
-  var card = cards.find(function (c) { return c.id === uiState.selectedCardId; }) || cards[0];
-  var mesAno = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var card = card0;
+  var offset = uiState.cartaoMesOffset || 0;
+  var mesRef = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+  var mesAnoAtual = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  var mesAno = mesRef.getFullYear() + "-" + String(mesRef.getMonth() + 1).padStart(2, "0");
   var faturaTxs = store.transactions
     .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao" && faturaMesFor(t.data, card) === mesAno; })
     .sort(function (a, b) { return new Date(b.data) - new Date(a.data); });
@@ -2232,17 +2364,17 @@ function renderCartao() {
   var quitada = faturaAtual > 0 && valorPago >= faturaAtual;
   var restante = Math.max(0, Math.round((faturaAtual - valorPago) * 100) / 100);
   var futuras = store.transactions
-    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao" && t.totalParcelas && faturaMesFor(t.data, card) !== mesAno; })
+    .filter(function (t) { return t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao" && t.totalParcelas && faturaMesFor(t.data, card) > mesAno; })
     .sort(function (a, b) { return new Date(a.data) - new Date(b.data); });
   var compromissoFuturo = futuras.reduce(function (s, t) { return s + t.valor; }, 0);
-  var diasAtraso = diasAtrasoFatura(card, faturaAtual, quitada, now);
+  var diasAtraso = diasAtrasoFatura(card, faturaAtual, quitada, now, mesRef.getFullYear(), mesRef.getMonth());
 
   var cardsComAtraso = {};
   cards.forEach(function (c) {
     var valor = store.transactions
-      .filter(function (t) { return t.cardId === c.id && t.tipo === "despesa" && t.pagamento === "cartao" && faturaMesFor(t.data, c) === mesAno; })
+      .filter(function (t) { return t.cardId === c.id && t.tipo === "despesa" && t.pagamento === "cartao" && faturaMesFor(t.data, c) === mesAnoAtual; })
       .reduce(function (s, t) { return s + t.valor; }, 0);
-    var pago = valorPagoFatura(c.id, mesAno, valor);
+    var pago = valorPagoFatura(c.id, mesAnoAtual, valor);
     var quit = valor > 0 && pago >= valor;
     if (diasAtrasoFatura(c, valor, quit, now) > 0) cardsComAtraso[c.id] = true;
   });
@@ -2282,10 +2414,21 @@ function renderCartao() {
       '<button type="button" class="btn-ghost btn-sm cartao-pagar-btn" data-action="pagarFaturaRestante" data-card="' + card.id + '" data-mesano="' + mesAno + '" data-restante="' + restante + '">Marcar restante (' + formatCurrency(restante) + ') como pago</button>';
   }
 
+  var mesLabel = MESES[mesRef.getMonth()] + (mesRef.getFullYear() !== now.getFullYear() ? " de " + mesRef.getFullYear() : "");
   var heroHTML = '<div class="cartao-hero">' +
-    '<div class="cartao-hero-name">' + escapeHTML(card.name) + '</div>' +
+    '<div class="cartao-hero-name-row">' +
+      '<div class="cartao-hero-name">' + escapeHTML(card.name) + '</div>' +
+      '<button type="button" class="cartao-edit-btn" aria-label="Editar cartão" data-action="cartaoEditCardStart" data-card="' + card.id + '">' +
+        '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
+      '</button>' +
+    '</div>' +
     '<div class="cartao-hero-fatura">' + formatCurrency(faturaAtual) + '</div>' +
-    '<div class="cartao-hero-sub">Fatura de ' + MESES[now.getMonth()] + '</div>' +
+    '<div class="cartao-mes-nav-row">' +
+      '<button type="button" class="cartao-mes-nav" aria-label="Mês anterior" data-action="cartaoMesPrev">‹</button>' +
+      '<span class="cartao-hero-sub">Fatura de ' + mesLabel + '</span>' +
+      '<button type="button" class="cartao-mes-nav" aria-label="Próximo mês" data-action="cartaoMesNext">›</button>' +
+      (offset !== 0 ? '<button type="button" class="link-btn cartao-mes-hoje" data-action="cartaoMesHoje">Hoje</button>' : '') +
+    '</div>' +
     '<div class="cartao-hero-dates">' + (card.closingDay ? "Fecha dia " + card.closingDay : "Fechamento não informado") + (card.dueDay ? " · Vence dia " + card.dueDay : "") + '</div>' +
     (card.limit ? '<div class="cartao-hero-limit">Limite: ' + formatCurrency(card.limit) + '</div>' : '') +
     statusHTML +
@@ -2296,7 +2439,7 @@ function renderCartao() {
     : '';
 
   var listAtualHTML = '<div class="cartao-section-title">Nesta fatura</div><div class="cartao-tx-list">' +
-    (faturaTxs.length === 0 ? '<div class="lanc-empty">Nenhum gasto neste cartão este mês.</div>' : faturaTxs.map(function (t) { return cartaoTxRowHTML(t, false); }).join("")) +
+    (faturaTxs.length === 0 ? '<div class="lanc-empty">Nenhum gasto neste cartão em ' + mesLabel.toLowerCase() + '.</div>' : faturaTxs.map(function (t) { return cartaoTxRowHTML(t, false); }).join("")) +
     '</div>';
 
   var listFuturaHTML = futuras.length > 0
@@ -2311,7 +2454,10 @@ function renderCartao() {
       : '<button type="button" class="btn-ghost btn-sm" data-action="deleteCardAsk" data-card="' + card.id + '">Excluir cartão</button>') +
     '</div>';
 
-  container.innerHTML = switchHTML + heroHTML + compromissoHTML + listAtualHTML + listFuturaHTML + dangerHTML;
+  var novaCompraRow = '<div class="cartao-add-compra-row"><button type="button" class="btn-ghost btn-sm" data-action="cartaoAddCompraStart" data-card="' + card.id + '">' +
+    '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova compra</button></div>';
+
+  container.innerHTML = switchHTML + heroHTML + novaCompraRow + compromissoHTML + listAtualHTML + listFuturaHTML + dangerHTML;
 }
 
 /* ------------------------------- view: categorias ---------------------------- */
@@ -2570,11 +2716,24 @@ function renderMetas() {
       '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova meta</button></div>';
   }
 
-  var hasReserva = metas.some(function (m) { return m.tipo === "reserva"; });
+  var reservas = metas.filter(function (m) { return m.tipo === "reserva"; });
   var suggested = computeSuggestedReserve(store.transactions);
-  if (!hasReserva && suggested) {
+  if (reservas.length === 0 && suggested) {
     html += '<div class="cartao-compromisso">Com base no seu histórico, uma reserva de emergência de 6 meses de despesas ficaria em torno de ' + formatCurrency(suggested) + '. ' +
       '<button type="button" class="link-btn" data-action="metaAddStart" data-value="reserva">Criar reserva</button></div>';
+  }
+
+  if (reservas.length > 0) {
+    var totalReserva = reservas.reduce(function (s, m) { return s + m.valorAtual; }, 0);
+    var totalAlvoReserva = reservas.reduce(function (s, m) { return s + m.valorAlvo; }, 0);
+    var pctReserva = totalAlvoReserva > 0 ? Math.min(100, (totalReserva / totalAlvoReserva) * 100) : 0;
+    html += '<div class="reserva-resumo">' +
+      '<div class="reserva-resumo-label"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><polyline points="9 12 11 14 15 10"/></svg> Reserva atual' +
+        (reservas.length > 1 ? ' (' + reservas.length + ' reservas)' : '') + '</div>' +
+      '<div class="reserva-resumo-valor">' + formatCurrency(totalReserva) +
+        (totalAlvoReserva > 0 ? '<span class="reserva-resumo-alvo"> de ' + formatCurrency(totalAlvoReserva) + '</span>' : '') + '</div>' +
+      '<div class="balance-bar"><div class="balance-bar-fill fill-gold" style="width:' + pctReserva + '%"></div></div>' +
+      '</div>';
   }
 
   html += '<div class="metas-list">' + metas.map(metaCardHTML).join("") + '</div>';
@@ -2788,7 +2947,7 @@ document.getElementById("cartaoView").addEventListener("click", function (e) {
   if (!el) return;
   var action = el.dataset.action;
   if (action === "addCardStart") { uiState.addingCard = true; render(); }
-  else if (action === "cartaoCancelCard") { uiState.addingCard = false; render(); }
+  else if (action === "cartaoCancelCard") { uiState.addingCard = false; uiState.editingCardId = null; render(); }
   else if (action === "cartaoSaveCard") {
     var vals = {
       name: document.getElementById("ccf-name").value,
@@ -2800,7 +2959,41 @@ document.getElementById("cartaoView").addEventListener("click", function (e) {
     uiState.addingCard = false;
     handleRegisterCardDirect(vals);
   }
-  else if (action === "selectCard") { uiState.selectedCardId = el.dataset.card; render(); }
+  else if (action === "selectCard") { uiState.selectedCardId = el.dataset.card; uiState.cartaoMesOffset = 0; render(); }
+  else if (action === "cartaoEditCardStart") { uiState.editingCardId = el.dataset.card; render(); }
+  else if (action === "cartaoSaveEditCard") {
+    var editVals = {
+      name: document.getElementById("ccf-name").value,
+      closingDay: document.getElementById("ccf-closing").value,
+      dueDay: document.getElementById("ccf-due").value,
+      limit: document.getElementById("ccf-limit").value,
+    };
+    if (!editVals.name.trim()) return;
+    var editingId = uiState.editingCardId;
+    uiState.editingCardId = null;
+    handleEditCardDirect(editingId, editVals);
+  }
+  else if (action === "cartaoAddCompraStart") { uiState.addingCompra = true; uiState.compraClass = null; render(); }
+  else if (action === "cartaoCancelCompra") { uiState.addingCompra = false; render(); }
+  else if (action === "compraTogglePill") {
+    uiState.compraClass = uiState.compraClass === el.dataset.value ? null : el.dataset.value;
+    render();
+  }
+  else if (action === "cartaoSaveCompra") {
+    var compraVals = {
+      categoria: document.getElementById("cc-categoria").value,
+      valor: document.getElementById("cc-valor").value,
+      parcelas: document.getElementById("cc-parcelas").value,
+      data: document.getElementById("cc-data").value,
+      classificacao: uiState.compraClass,
+    };
+    if (!compraVals.valor) return;
+    uiState.addingCompra = false;
+    handleAddCompraCartao(el.dataset.card, compraVals);
+  }
+  else if (action === "cartaoMesPrev") { uiState.cartaoMesOffset = (uiState.cartaoMesOffset || 0) - 1; render(); }
+  else if (action === "cartaoMesNext") { uiState.cartaoMesOffset = (uiState.cartaoMesOffset || 0) + 1; render(); }
+  else if (action === "cartaoMesHoje") { uiState.cartaoMesOffset = 0; render(); }
   else if (action === "desfazerPagamentoFatura") handleDesfazerPagamentoFatura(el.dataset.card, el.dataset.mesano);
   else if (action === "registrarPagamentoFatura") {
     var input = document.getElementById("pagamentoFaturaInput");
