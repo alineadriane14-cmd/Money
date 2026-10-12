@@ -855,6 +855,9 @@ html, body { height: 100%; margin: 0; }
 .meta-card-sub { font-size: 11.5px; color: var(--ink-soft); text-transform: capitalize; }
 .fill-teal { background: var(--teal); }
 .fill-gold { background: var(--gold); }
+.fill-rust { background: var(--rust); }
+.cartao-limite-uso { margin-top: 6px; }
+.cartao-limite-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
 .meta-aportar-btn { align-self: flex-start; flex: none; padding: 6px 12px; }
 .meta-aporte-row { display: flex; gap: 6px; align-items: center; }
 .meta-aporte-row input { flex: 1; }
@@ -1268,6 +1271,23 @@ function valorPagoFatura(cardId, mesAno, faturaAtual) {
     else hasLegacyFull = true;
   });
   if (hasLegacyFull) total = Math.max(total, faturaAtual);
+  return Math.round(total * 100) / 100;
+}
+
+function saldoDevedorCartao(card) {
+  var porMes = {};
+  store.transactions.forEach(function (t) {
+    if (t.cardId === card.id && t.tipo === "despesa" && t.pagamento === "cartao") {
+      var mes = faturaMesFor(t.data, card);
+      porMes[mes] = (porMes[mes] || 0) + t.valor;
+    }
+  });
+  var total = 0;
+  Object.keys(porMes).forEach(function (mes) {
+    var faturaMes = porMes[mes];
+    var pago = valorPagoFatura(card.id, mes, faturaMes);
+    total += Math.max(0, faturaMes - pago);
+  });
   return Math.round(total * 100) / 100;
 }
 
@@ -2430,7 +2450,17 @@ function renderCartao() {
       (offset !== 0 ? '<button type="button" class="link-btn cartao-mes-hoje" data-action="cartaoMesHoje">Hoje</button>' : '') +
     '</div>' +
     '<div class="cartao-hero-dates">' + (card.closingDay ? "Fecha dia " + card.closingDay : "Fechamento não informado") + (card.dueDay ? " · Vence dia " + card.dueDay : "") + '</div>' +
-    (card.limit ? '<div class="cartao-hero-limit">Limite: ' + formatCurrency(card.limit) + '</div>' : '') +
+    (card.limit ? (function () {
+      var consumido = saldoDevedorCartao(card);
+      var pctConsumido = card.limit > 0 ? Math.min(100, (consumido / card.limit) * 100) : 0;
+      var disponivel = Math.max(0, Math.round((card.limit - consumido) * 100) / 100);
+      var corFill = pctConsumido >= 90 ? "fill-rust" : pctConsumido >= 70 ? "fill-gold" : "fill-teal";
+      return '<div class="cartao-hero-limit">Limite: ' + formatCurrency(card.limit) + '</div>' +
+        '<div class="cartao-limite-uso">' +
+          '<div class="balance-bar"><div class="balance-bar-fill ' + corFill + '" style="width:' + pctConsumido + '%"></div></div>' +
+          '<div class="cartao-limite-sub">' + pctConsumido.toFixed(0) + '% usado · ' + formatCurrency(disponivel) + ' disponível</div>' +
+        '</div>';
+    })() : '') +
     statusHTML +
     '</div>';
 
