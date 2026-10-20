@@ -833,6 +833,54 @@ html, body { height: 100%; margin: 0; }
   margin: 4px 0 8px;
 }
 .reserva-resumo-alvo { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 400; color: var(--ink-soft); }
+.reserva-resumo-valor.positive { color: var(--teal-dark); }
+.reserva-resumo-valor.negative { color: var(--rust); }
+.reserva-resumo-negativo { background: var(--rust-soft); border-color: var(--rust); }
+.orc-resumo-sub { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-soft); }
+.orc-resumo-realizado { font-size: 11px; color: var(--ink-soft); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.08); }
+.orc-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.orc-item-card {
+  background: var(--paper-card);
+  border: 1px solid var(--paper-line);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.orc-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.orc-item-nome { flex: 1; font-size: 13.5px; color: var(--ink); }
+.orc-item-valor { font-size: 12px; color: var(--ink-soft); white-space: nowrap; }
+.orc-item-sub { font-size: 11.5px; color: var(--ink-soft); margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; }
+.orc-item-estourou { color: var(--rust); font-weight: 600; }
+.orc-item-card .balance-bar { margin-top: 8px; }
+.orc-chart { display: flex; gap: 4px; margin-top: 4px; }
+.orc-chart-col { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 2px 4px; border-radius: 8px; }
+.orc-chart-sel { background: rgba(47, 111, 94, 0.09); }
+.orc-chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 3px; height: 130px; width: 100%; }
+.orc-bar-wrap { flex: 1; max-width: 26px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.orc-bar { width: 100%; border-radius: 4px 4px 0 0; }
+.orc-bar-prev { background: var(--gold); }
+.orc-bar-real { background: var(--teal); }
+.orc-bar-over { background: var(--rust); }
+.orc-bar-val { font-size: 9px; color: var(--ink-soft); margin-bottom: 2px; white-space: nowrap; }
+.orc-chart-label { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+.orc-chart-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--ink-soft); margin-top: 4px; }
+.orc-chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.orc-lg { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+.orc-item-edit { flex-wrap: wrap; }
+.orc-item-edit input {
+  border: 1px solid var(--paper-line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--paper);
+}
+.orc-item-edit input:first-child { flex: 2; min-width: 100px; }
+.orc-item-edit input:nth-child(2) { flex: 1; min-width: 70px; }
 .meta-card {
   background: var(--paper-card);
   border: 1px solid var(--paper-line);
@@ -992,6 +1040,9 @@ html, body { height: 100%; margin: 0; }
     <div class="view" id="view-negociacoes" hidden>
       <div class="metas-view" id="negView"></div>
     </div>
+    <div class="view" id="view-orcamento" hidden>
+      <div class="metas-view" id="orcamentoView"></div>
+    </div>
 
     <nav class="bottom-tabs">
       <button type="button" class="tab-btn tab-active" data-tab="chat">
@@ -1017,6 +1068,10 @@ html, body { height: 100%; margin: 0; }
       <button type="button" class="tab-btn" data-tab="negociacoes">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="4" y1="10" x2="20" y2="10"/><polygon points="12 3 20 10 4 10 12 3"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/></svg>
         <span>Negoc.</span>
+      </button>
+      <button type="button" class="tab-btn" data-tab="orcamento">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="7" y1="13" x2="11" y2="13"/><line x1="7" y1="16.5" x2="9" y2="16.5"/></svg>
+        <span>Orçam.</span>
       </button>
     </nav>
   </div>
@@ -1380,6 +1435,7 @@ function initialStore() {
     classTagsReceita: [],
     faturasPagas: [],
     negociacoes: [],
+    orcamento: { rendaFixa: [], despesasFixas: [] },
     messages: [
       {
         id: newId("msg"),
@@ -1407,6 +1463,9 @@ function loadStore() {
     if (!data.classTagsReceita) data.classTagsReceita = [];
     if (!data.faturasPagas) data.faturasPagas = [];
     if (!data.negociacoes) data.negociacoes = [];
+    if (!data.orcamento || typeof data.orcamento !== "object") data.orcamento = { rendaFixa: [], despesasFixas: [] };
+    if (!Array.isArray(data.orcamento.rendaFixa)) data.orcamento.rendaFixa = [];
+    if (!Array.isArray(data.orcamento.despesasFixas)) data.orcamento.despesasFixas = [];
     if (!data.drafts) data.drafts = {};
     if (!data.cards) data.cards = [];
     if (!data.transactions) data.transactions = [];
@@ -1435,6 +1494,9 @@ function healStoreData(data) {
   if (!Array.isArray(data.classTagsReceita)) data.classTagsReceita = [];
   if (!Array.isArray(data.faturasPagas)) data.faturasPagas = [];
   if (!Array.isArray(data.negociacoes)) data.negociacoes = [];
+  if (!data.orcamento || typeof data.orcamento !== "object") data.orcamento = { rendaFixa: [], despesasFixas: [] };
+  if (!Array.isArray(data.orcamento.rendaFixa)) data.orcamento.rendaFixa = [];
+  if (!Array.isArray(data.orcamento.despesasFixas)) data.orcamento.despesasFixas = [];
   if (!Array.isArray(data.messages)) data.messages = [];
   if (!data.drafts || typeof data.drafts !== "object") data.drafts = {};
   return data;
@@ -1529,6 +1591,14 @@ var uiState = {
   deletingNegId: null,
   editingTag: null,
   feedbackTipo: "bug",
+  addingRenda: false,
+  editingRendaId: null,
+  deletingRendaId: null,
+  addingDespesaFixa: false,
+  editingDespesaFixaId: null,
+  deletingDespesaFixaId: null,
+  orcamentoMes: null,
+  orcGraficoLista: "despesasFixas",
 };
 
 
@@ -1934,6 +2004,136 @@ function handleDesfazerParcelaNegociacao(negId) {
   });
 }
 
+/* --------------------------------- handlers: orçamento ----------------------- */
+
+function orcamentoRealizado(nome, lista, now) {
+  var alvo = stripAccents((nome || "").toLowerCase()).trim();
+  var tipoTx = lista === "rendaFixa" ? "receita" : "despesa";
+  return store.transactions
+    .filter(function (t) {
+      if (t.tipo !== tipoTx) return false;
+      if (!sameMonth(t.data, now)) return false;
+      var cat = stripAccents((t.categoria || "").toLowerCase()).trim();
+      return cat === alvo;
+    })
+    .reduce(function (s, t) { return s + t.valor; }, 0);
+}
+
+function orcamentoMesRef() {
+  var key = uiState.orcamentoMes;
+  if (key) {
+    var p = key.split("-");
+    return new Date(parseInt(p[0], 10), parseInt(p[1], 10) - 1, 1);
+  }
+  return new Date();
+}
+
+function mesKeyLabel(key) {
+  var p = key.split("-");
+  var m = parseInt(p[1], 10) - 1;
+  return MESES[m].charAt(0).toUpperCase() + MESES[m].slice(1) + " de " + p[0];
+}
+
+function compactBRL(v) {
+  if (v >= 1000) {
+    var k = (v / 1000).toFixed(v >= 10000 ? 0 : 1).replace(".", ",");
+    return k.replace(",0", "") + "k";
+  }
+  return String(Math.round(v));
+}
+
+function orcamentoSerieMensal(lista, endDate, nMeses) {
+  var items = (store.orcamento && store.orcamento[lista]) || [];
+  var previsto = items.reduce(function (s, it) { return s + it.valor; }, 0);
+  var serie = [];
+  for (var i = nMeses - 1; i >= 0; i--) {
+    var ref = new Date(endDate.getFullYear(), endDate.getMonth() - i, 1);
+    var realizado = items.reduce(function (s, it) { return s + orcamentoRealizado(it.nome, lista, ref); }, 0);
+    var label = MESES[ref.getMonth()].slice(0, 3);
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    if (ref.getFullYear() !== endDate.getFullYear()) label += "/" + String(ref.getFullYear()).slice(2);
+    serie.push({ ref: ref, label: label, previsto: previsto, realizado: realizado });
+  }
+  return serie;
+}
+
+function orcamentoGraficoHTML(refDate) {
+  var lista = uiState.orcGraficoLista || "despesasFixas";
+  var isDespesa = lista === "despesasFixas";
+  var items = (store.orcamento && store.orcamento[lista]) || [];
+  var html = '<div class="cartao-section-title">Previsto × realizado por mês</div>' +
+    '<div class="filter-row">' +
+      '<button type="button" class="chip chip-sm' + (isDespesa ? " chip-active" : "") + '" data-action="orcGraficoLista" data-value="despesasFixas">Despesas fixas</button>' +
+      '<button type="button" class="chip chip-sm' + (!isDespesa ? " chip-active" : "") + '" data-action="orcGraficoLista" data-value="rendaFixa">Renda fixa</button>' +
+    '</div>';
+
+  if (items.length === 0) {
+    return html + '<div class="lanc-empty">Cadastre itens em ' + (isDespesa ? "Despesas fixas" : "Renda fixa") + ' pra ver o gráfico.</div>';
+  }
+
+  var serie = orcamentoSerieMensal(lista, refDate, 6);
+  var max = 0;
+  serie.forEach(function (p) { max = Math.max(max, p.previsto, p.realizado); });
+  function alt(v) {
+    if (max <= 0 || v <= 0) return 0;
+    return Math.max(2, (v / max) * 82);
+  }
+
+  html += '<div class="orc-chart">' + serie.map(function (p, idx) {
+    var estourou = isDespesa && p.realizado > p.previsto;
+    var sel = idx === serie.length - 1;
+    return '<div class="orc-chart-col' + (sel ? " orc-chart-sel" : "") + '">' +
+      '<div class="orc-chart-bars">' +
+        '<div class="orc-bar-wrap"><span class="orc-bar-val">' + compactBRL(p.previsto) + '</span><div class="orc-bar orc-bar-prev" style="height:' + alt(p.previsto) + '%"></div></div>' +
+        '<div class="orc-bar-wrap"><span class="orc-bar-val">' + compactBRL(p.realizado) + '</span><div class="orc-bar ' + (estourou ? "orc-bar-over" : "orc-bar-real") + '" style="height:' + alt(p.realizado) + '%"></div></div>' +
+      '</div>' +
+      '<div class="orc-chart-label">' + p.label + '</div>' +
+    '</div>';
+  }).join("") + '</div>' +
+  '<div class="orc-chart-legend">' +
+    '<span><i class="orc-lg orc-bar-prev"></i> Previsto</span>' +
+    '<span><i class="orc-lg orc-bar-real"></i> ' + (isDespesa ? "Gasto" : "Recebido") + '</span>' +
+    (isDespesa ? '<span><i class="orc-lg orc-bar-over"></i> Estourou</span>' : '') +
+  '</div>';
+  return html;
+}
+
+function handleAddOrcamentoItem(lista, vals) {
+  var nome = vals.nome.trim();
+  var valor = parseValorBR(vals.valor);
+  if (!nome || isNaN(valor) || valor <= 0) return;
+  var item = { id: newId("orc"), nome: nome, valor: Math.round(valor * 100) / 100 };
+  mutate(function (prev) {
+    var orcamento = Object.assign({ rendaFixa: [], despesasFixas: [] }, prev.orcamento);
+    orcamento = Object.assign({}, orcamento);
+    orcamento[lista] = (orcamento[lista] || []).concat([item]);
+    return Object.assign({}, prev, { orcamento: orcamento });
+  });
+}
+
+function handleEditOrcamentoItem(lista, id, vals) {
+  var nome = vals.nome.trim();
+  var valor = parseValorBR(vals.valor);
+  if (!nome || isNaN(valor) || valor <= 0) return;
+  mutate(function (prev) {
+    var orcamento = Object.assign({ rendaFixa: [], despesasFixas: [] }, prev.orcamento);
+    orcamento = Object.assign({}, orcamento);
+    orcamento[lista] = (orcamento[lista] || []).map(function (it) {
+      return it.id === id ? Object.assign({}, it, { nome: nome, valor: Math.round(valor * 100) / 100 }) : it;
+    });
+    return Object.assign({}, prev, { orcamento: orcamento });
+  });
+}
+
+function handleDeleteOrcamentoItem(lista, id) {
+  mutate(function (prev) {
+    var orcamento = Object.assign({ rendaFixa: [], despesasFixas: [] }, prev.orcamento);
+    orcamento = Object.assign({}, orcamento);
+    orcamento[lista] = (orcamento[lista] || []).filter(function (it) { return it.id !== id; });
+    return Object.assign({}, prev, { orcamento: orcamento });
+  });
+}
+
 /* ------------------------------- renderização ------------------------------ */
 
 function cardFormHTML(draftId) {
@@ -2096,6 +2296,7 @@ function render() {
   renderCategorias();
   renderMetas();
   renderNegociacoes();
+  renderOrcamento();
 }
 
 /* ---------------------------- view: lançamentos ----------------------------- */
@@ -2838,6 +3039,122 @@ function renderNegociacoes() {
   container.innerHTML = html;
 }
 
+/* -------------------------------- view: orçamento ------------------------------ */
+
+function orcamentoItemRowHTML(item, lista, editingId, deletingId) {
+  if (editingId === item.id) {
+    return '<div class="orc-item-card"><div class="orc-item-row orc-item-edit">' +
+      '<input id="orc-edit-nome-' + item.id + '" value="' + escapeHTML(item.nome) + '" placeholder="Nome">' +
+      '<input id="orc-edit-valor-' + item.id + '" value="' + String(item.valor).replace(".", ",") + '" placeholder="R$" inputmode="decimal">' +
+      '<button type="button" class="btn-ghost btn-xs" data-action="orcEditCancel">Cancelar</button>' +
+      '<button type="button" class="btn-primary btn-xs" data-action="orcEditSave" data-lista="' + lista + '" data-id="' + item.id + '">Salvar</button>' +
+      '</div></div>';
+  }
+  if (deletingId === item.id) {
+    return '<div class="orc-item-card"><div class="orc-item-row">' +
+      '<span class="orc-item-nome">' + escapeHTML(item.nome) + '</span>' +
+      '<div class="lanc-delete-confirm">' +
+        '<button type="button" class="btn-ghost btn-xs" data-action="orcDeleteCancel">Cancelar</button>' +
+        '<button type="button" class="btn-danger btn-xs" data-action="orcDeleteConfirm" data-lista="' + lista + '" data-id="' + item.id + '">Excluir</button>' +
+      '</div></div></div>';
+  }
+  var now = orcamentoMesRef();
+  var realizado = orcamentoRealizado(item.nome, lista, now);
+  var pct = item.valor > 0 ? (realizado / item.valor) * 100 : 0;
+  var isDespesa = lista === "despesasFixas";
+  var estourou = isDespesa && realizado > item.valor;
+  var corFill = estourou ? "fill-rust" : (pct >= 90 ? "fill-gold" : "fill-teal");
+  var rotuloRealizado = isDespesa ? "Gasto" : "Recebido";
+  var statusHTML = estourou
+    ? '<span class="orc-item-status orc-item-estourou">estourou ' + formatCurrency(realizado - item.valor) + '</span>'
+    : '';
+
+  return '<div class="orc-item-card">' +
+    '<div class="orc-item-row">' +
+      '<span class="orc-item-nome">' + escapeHTML(item.nome) + '</span>' +
+      '<span class="orc-item-valor">' + formatCurrency(item.valor) + ' previsto</span>' +
+      '<button type="button" class="lanc-delete-btn" aria-label="Editar" data-action="orcEditStart" data-lista="' + lista + '" data-id="' + item.id + '">' +
+        '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>' +
+      '</button>' +
+      '<button type="button" class="lanc-delete-btn" aria-label="Excluir" data-action="orcDeleteAsk" data-lista="' + lista + '" data-id="' + item.id + '">' +
+        '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>' +
+      '</button>' +
+    '</div>' +
+    '<div class="balance-bar"><div class="balance-bar-fill ' + corFill + '" style="width:' + Math.min(100, pct) + '%"></div></div>' +
+    '<div class="orc-item-sub">' + rotuloRealizado + ': ' + formatCurrency(realizado) + ' (' + pct.toFixed(0) + '%)' + statusHTML + '</div>' +
+    '</div>';
+}
+
+function orcamentoSectionHTML(titulo, items, lista, adding, editingId, deletingId, placeholder) {
+  var html = '<div class="cartao-section-title">' + titulo + '</div>';
+  if (items.length === 0 && !adding) {
+    html += '<div class="lanc-empty">Nada cadastrado ainda.</div>';
+  } else {
+    html += '<div class="orc-list">' + items.map(function (item) {
+      return orcamentoItemRowHTML(item, lista, editingId, deletingId);
+    }).join("") + '</div>';
+  }
+  if (adding) {
+    html += '<div class="inline-form">' +
+      '<label>Nome<input id="orc-add-nome" placeholder="' + placeholder + '" autofocus></label>' +
+      '<label>Valor<input id="orc-add-valor" placeholder="R$" inputmode="decimal"></label>' +
+      '<div class="inline-form-actions">' +
+        '<button type="button" class="btn-ghost" data-action="orcAddCancel">Cancelar</button>' +
+        '<button type="button" class="btn-primary" data-action="orcAddSave" data-lista="' + lista + '">Salvar</button>' +
+      '</div></div>';
+  } else {
+    html += '<div class="metas-add-row"><button type="button" class="btn-ghost btn-sm" data-action="orcAddStart" data-lista="' + lista + '">' +
+      '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Adicionar</button></div>';
+  }
+  return html;
+}
+
+function renderOrcamento() {
+  var container = document.getElementById("orcamentoView");
+  var orcamento = store.orcamento || { rendaFixa: [], despesasFixas: [] };
+  var rendaFixa = orcamento.rendaFixa || [];
+  var despesasFixas = orcamento.despesasFixas || [];
+  var totalRenda = rendaFixa.reduce(function (s, it) { return s + it.valor; }, 0);
+  var totalDespesas = despesasFixas.reduce(function (s, it) { return s + it.valor; }, 0);
+  var sobra = totalRenda - totalDespesas;
+  var now0 = orcamentoMesRef();
+  var curKey = new Date().getFullYear() + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
+  var selKey = uiState.orcamentoMes || curKey;
+  var isAtual = selKey === curKey;
+  var realizadoRenda = rendaFixa.reduce(function (s, it) { return s + orcamentoRealizado(it.nome, "rendaFixa", now0); }, 0);
+  var realizadoDespesas = despesasFixas.reduce(function (s, it) { return s + orcamentoRealizado(it.nome, "despesasFixas", now0); }, 0);
+  var sobraRealizada = realizadoRenda - realizadoDespesas;
+
+  var keys = {};
+  keys[curKey] = true;
+  keys[selKey] = true;
+  mesesDisponiveis().forEach(function (k) { keys[k] = true; });
+  var opts = Object.keys(keys).sort().reverse().map(function (k) {
+    return '<option value="' + k + '"' + (k === selKey ? " selected" : "") + '>' + mesKeyLabel(k) + (k === curKey ? " (atual)" : "") + '</option>';
+  }).join("");
+
+  var html = '<div class="filter-row"><select class="filter-select" id="orcMesSelect">' + opts + '</select></div>';
+
+  html += '<div class="reserva-resumo' + (sobra < 0 ? " reserva-resumo-negativo" : "") + '">' +
+    '<div class="reserva-resumo-label">Orçamento fixo mensal</div>' +
+    '<div class="reserva-resumo-valor ' + (sobra < 0 ? "negative" : "positive") + '">' + formatCurrency(sobra) +
+      '<span class="reserva-resumo-alvo"> de sobra esperada</span></div>' +
+    '<div class="orc-resumo-sub">' +
+      '<span class="orc-resumo-renda">Renda fixa ' + formatCurrency(totalRenda) + '</span>' +
+      '<span class="orc-resumo-despesa">Despesas fixas ' + formatCurrency(totalDespesas) + '</span>' +
+    '</div>' +
+    '<div class="orc-resumo-realizado">' + (isAtual ? 'Realizado até agora' : 'Realizado em ' + mesKeyLabel(selKey).toLowerCase()) + ': receitas ' + formatCurrency(realizadoRenda) + ' · despesas ' + formatCurrency(realizadoDespesas) +
+      ' · sobra ' + formatCurrency(sobraRealizada) + '</div>' +
+    '</div>';
+
+  html += orcamentoGraficoHTML(now0);
+
+  html += orcamentoSectionHTML("Renda fixa", rendaFixa, "rendaFixa", uiState.addingRenda, uiState.editingRendaId, uiState.deletingRendaId, "Ex: Salário, Freela fixo");
+  html += orcamentoSectionHTML("Despesas fixas", despesasFixas, "despesasFixas", uiState.addingDespesaFixa, uiState.editingDespesaFixaId, uiState.deletingDespesaFixaId, "Ex: Aluguel, Internet, Plano de saúde");
+
+  container.innerHTML = html;
+}
+
 /* --------------------------------- eventos --------------------------------- */
 
 document.getElementById("btnSend").addEventListener("click", handleSubmit);
@@ -3174,6 +3491,81 @@ document.getElementById("negView").addEventListener("click", function (e) {
   else if (action === "negDeleteConfirm") { uiState.deletingNegId = null; handleDeleteNegociacao(id); }
   else if (action === "negPagarParcela") handlePagarParcelaNegociacao(id);
   else if (action === "negDesfazer") handleDesfazerParcelaNegociacao(id);
+});
+
+/* -------- orçamento -------- */
+
+document.getElementById("orcamentoView").addEventListener("click", function (e) {
+  var el = e.target.closest("[data-action]");
+  if (!el) return;
+  var action = el.dataset.action;
+  var lista = el.dataset.lista;
+  var id = el.dataset.id;
+  if (action === "orcAddStart") {
+    uiState.addingRenda = lista === "rendaFixa";
+    uiState.addingDespesaFixa = lista === "despesasFixas";
+    uiState.editingRendaId = null;
+    uiState.editingDespesaFixaId = null;
+    render();
+  }
+  else if (action === "orcGraficoLista") { uiState.orcGraficoLista = el.dataset.value; render(); }
+  else if (action === "orcAddCancel") { uiState.addingRenda = false; uiState.addingDespesaFixa = false; render(); }
+  else if (action === "orcAddSave") {
+    var vals = {
+      nome: document.getElementById("orc-add-nome").value,
+      valor: document.getElementById("orc-add-valor").value,
+    };
+    uiState.addingRenda = false;
+    uiState.addingDespesaFixa = false;
+    handleAddOrcamentoItem(lista, vals);
+  }
+  else if (action === "orcEditStart") {
+    uiState.editingRendaId = lista === "rendaFixa" ? id : null;
+    uiState.editingDespesaFixaId = lista === "despesasFixas" ? id : null;
+    uiState.addingRenda = false;
+    uiState.addingDespesaFixa = false;
+    render();
+  }
+  else if (action === "orcEditCancel") { uiState.editingRendaId = null; uiState.editingDespesaFixaId = null; render(); }
+  else if (action === "orcEditSave") {
+    var editVals = {
+      nome: document.getElementById("orc-edit-nome-" + id).value,
+      valor: document.getElementById("orc-edit-valor-" + id).value,
+    };
+    uiState.editingRendaId = null;
+    uiState.editingDespesaFixaId = null;
+    handleEditOrcamentoItem(lista, id, editVals);
+  }
+  else if (action === "orcDeleteAsk") {
+    uiState.deletingRendaId = lista === "rendaFixa" ? id : null;
+    uiState.deletingDespesaFixaId = lista === "despesasFixas" ? id : null;
+    render();
+  }
+  else if (action === "orcDeleteCancel") { uiState.deletingRendaId = null; uiState.deletingDespesaFixaId = null; render(); }
+  else if (action === "orcDeleteConfirm") {
+    uiState.deletingRendaId = null;
+    uiState.deletingDespesaFixaId = null;
+    handleDeleteOrcamentoItem(lista, id);
+  }
+});
+document.getElementById("orcamentoView").addEventListener("change", function (e) {
+  if (e.target && e.target.id === "orcMesSelect") {
+    var now = new Date();
+    var curKey = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+    uiState.orcamentoMes = e.target.value === curKey ? null : e.target.value;
+    uiState.addingRenda = false;
+    uiState.addingDespesaFixa = false;
+    uiState.editingRendaId = null;
+    uiState.editingDespesaFixaId = null;
+    render();
+  }
+});
+document.getElementById("orcamentoView").addEventListener("keydown", function (e) {
+  if (e.key !== "Enter") return;
+  if (e.target && e.target.id === "orc-add-nome") {
+    var btn = document.querySelector('[data-action="orcAddSave"]');
+    if (btn) btn.click();
+  }
 });
 
 render();
